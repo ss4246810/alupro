@@ -1,0 +1,32 @@
+# Local WordPress configuration
+wp-config.php
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Runtime and generated files
+*.log
+debug.log
+error_log
+*.tmp
+*.bak
+*.swp
+
+# WordPress uploads and cache
+wp-content/uploads/
+wp-content/cache/
+wp-content/upgrade/
+wp-content/backup*/
+wp-content/backups*/
+
+# Local development files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Dependencies, if managed locally
+node_modules/
+vendor/
