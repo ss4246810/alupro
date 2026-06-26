@@ -1,0 +1,277 @@
+/* Aptos Font Varients Starts */
+/* @font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-Light.woff2") format("woff2"),
+       url("../fonts/Aptos-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-Regular.woff2") format("woff2"),
+       url("../fonts/Aptos-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-SemiBold.woff2") format("woff2"),
+       url("../fonts/Aptos-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-Bold.woff2") format("woff2"),
+       url("../fonts/Aptos-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-ExtraBold.woff2") format("woff2"),
+       url("../fonts/Aptos-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-Black.woff2") format("woff2"),
+       url("../fonts/Aptos-Black.ttf") format("truetype");
+/* Aptos Font Varients Starts */
+/* @font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-Light.woff2") format("woff2"),
+       url("../fonts/Aptos-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-Regular.woff2") format("woff2"),
+       url("../fonts/Aptos-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-SemiBold.woff2") format("woff2"),
+       url("../fonts/Aptos-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-Bold.woff2") format("woff2"),
+       url("../fonts/Aptos-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-ExtraBold.woff2") format("woff2"),
+       url("../fonts/Aptos-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Aptos";
+  src: url("../fonts/Aptos-Black.woff2") format("woff2"),
+       url("../fonts/Aptos-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+} */
+/* Aptos Font Varients Ends */
+
+html,
+body {
+  height: 100%;
+  font:
+    16px/1.5 "Inter", Arial,
+    sans-serif;
+  color: rgba(0, 0, 0, 0.8);
+  font-weight: 300;
+  /* letter-spacing: .9px; */
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+  /* font-family: "Inter", sans-serif; */
+  /* font-family: "Aptos", Arial, sans-serif; */
+}
+
+body {
+  padding-top: 104px !important;
+}
+
+.nav-link {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.alupro-home-banner {
+  align-items: center;
+  background: #120a45;
+  display: flex;
+  min-height: calc(100vh - 104px);
+  min-height: calc(100svh - 104px);
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.alupro-home-banner__media {
+  inset: 0;
+  position: absolute;
+  z-index: 0;
+}
+
+.alupro-home-banner__image {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+}
+
+.alupro-home-banner__content {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80rem;
+  position: relative;
+  width: 100%;
+  z-index: 10;
+}
+
+.dropdown {
+  transition: all 0.25s ease-in-out;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+}
+
+.group:hover .dropdown,
+.group:focus-within .dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown {
+  pointer-events: none;
+}
+
+.group:hover .dropdown,
+.group:focus-within .dropdown {
+  pointer-events: auto;
+}
+
+.footer-pattern {
+  background:
+    radial-gradient(circle at 85% 12%, rgba(244, 192, 38, 0.18), transparent 28%),
+    linear-gradient(135deg, rgba(25, 14, 93, 0.95), rgba(18, 10, 69, 1) 55%, rgba(12, 7, 48, 1));
+  opacity: 1;
+}
+
+.materials-carousel,
+.specialty-carousel {
+  overflow-y: visible;
+  scroll-padding-left: 0;
+  scroll-padding-right: 0;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+
+.materials-carousel::-webkit-scrollbar,
+.structural-carousel::-webkit-scrollbar,
+.aerospace-carousel::-webkit-scrollbar,
+.extrusions-carousel::-webkit-scrollbar,
+.specialty-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.materials-slide,
+.specialty-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+
+.structural-carousel,
+.aerospace-carousel {
+  overflow-y: visible;
+  scroll-padding-left: 0;
+  scroll-padding-right: 0;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+
+.structural-slide,
+.aerospace-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+
+.extrusions-carousel {
+  overflow-y: visible;
+  scroll-padding-left: 0;
+  scroll-padding-right: 0;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+
+.extrusions-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 640px) {
+  .materials-slide,
+  .structural-slide,
+  .aerospace-slide,
+  .extrusions-slide,
+  .specialty-slide {
+    flex-basis: calc((100% - 24px) / 2);
+  }
+}
+
+@media (min-width: 1024px) {
+  .materials-slide,
+  .structural-slide,
+  .aerospace-slide,
+  .extrusions-slide,
+  .specialty-slide {
+    flex-basis: calc((100% - 48px) / 3);
+  }
+}
+
+@media (min-width: 1280px) {
+  .materials-slide,
+  .structural-slide,
+  .extrusions-slide,
+  .specialty-slide {
+    flex-basis: calc((100% - 72px) / 4);
+  }
+
+  .aerospace-slide {
+    flex-basis: calc((100% - 48px) / 3);
+  }
+}
