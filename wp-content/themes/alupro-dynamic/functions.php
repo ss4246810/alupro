@@ -5,27 +5,36 @@
  * @package AluProDynamic
  */
 
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
 	exit;
 }
 
-function alupro_dynamic_setup() {
+/**
+ * Theme Setup Configuration.
+ * 
+ * - Called by: WordPress core (hooked to 'after_setup_theme' action).
+ * - Related Files: Enqueued during initialization, configures global theme behavior.
+ * - Purpose: Registers theme support for HTML5, custom-logo, title-tag, post-thumbnails,
+ *   and registers navigation menu locations (Primary Navigation & Footer Navigation).
+ */
+function alupro_dynamic_setup()
+{
 	add_theme_support('title-tag');
 	add_theme_support('post-thumbnails');
 	add_theme_support(
 		'custom-logo',
 		array(
-			'height'      => 64,
-			'width'       => 220,
+			'height' => 64,
+			'width' => 220,
 			'flex-height' => true,
-			'flex-width'  => true,
+			'flex-width' => true,
 		)
 	);
 
 	register_nav_menus(
 		array(
 			'primary' => __('Primary Navigation', 'alupro-dynamic'),
-			'footer'  => __('Footer Navigation', 'alupro-dynamic'),
+			'footer' => __('Footer Navigation', 'alupro-dynamic'),
 		)
 	);
 }
@@ -36,7 +45,16 @@ add_filter('use_block_editor_for_post_type', '__return_false', 10);
 add_filter('gutenberg_use_widgets_block_editor', '__return_false');
 add_filter('use_widgets_block_editor', '__return_false');
 
-function alupro_dynamic_enqueue_assets() {
+/**
+ * Enqueue Theme Stylesheets and Scripts.
+ * 
+ * - Called by: WordPress core (hooked to 'wp_enqueue_scripts' action).
+ * - Related Files: header.php (via wp_head()) and footer.php (via wp_footer()).
+ * - Purpose: Enqueues dynamic stylesheets (Google Fonts, Font Awesome, css/style.css, active theme's style.css)
+ *   and front-end scripts (Tailwind Play CDN and theme's js/all.js).
+ */
+function alupro_dynamic_enqueue_assets()
+{
 	wp_enqueue_style(
 		'alupro-google-fonts',
 		'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
@@ -83,23 +101,33 @@ function alupro_dynamic_enqueue_assets() {
 }
 add_action('wp_enqueue_scripts', 'alupro_dynamic_enqueue_assets');
 
-function alupro_dynamic_customize_register($wp_customize) {
+/**
+ * Register Customizer Settings and Controls.
+ * 
+ * - Called by: WordPress Customizer manager (hooked to 'customize_register' action).
+ * - Related Files: template-parts/banner.php (uses the settings registered here).
+ * - Purpose: Defines fields for customizer section 'Home Banner' allowing dynamic edits of 
+ *   eyebrow, title, title accent, description, primary button URL & text, quote button text,
+ *   and recommended 1920x1080 resolution background image.
+ */
+function alupro_dynamic_customize_register($wp_customize)
+{
 	$wp_customize->add_section(
 		'alupro_home_banner',
 		array(
-			'title'    => __('Home Banner', 'alupro-dynamic'),
+			'title' => __('Home Banner', 'alupro-dynamic'),
 			'priority' => 30,
 		)
 	);
 
 	$fields = array(
-		'banner_eyebrow'      => array('ALUPRO ALLOY | MARINE ALUMINIUM', __('Eyebrow', 'alupro-dynamic'), 'text'),
-		'banner_title'        => array('Built for the Sea', __('Title', 'alupro-dynamic'), 'text'),
+		'banner_eyebrow' => array('ALUPRO ALLOY | MARINE ALUMINIUM', __('Eyebrow', 'alupro-dynamic'), 'text'),
+		'banner_title' => array('Built for the Sea', __('Title', 'alupro-dynamic'), 'text'),
 		'banner_title_accent' => array('Engineered for Excellence', __('Title Accent', 'alupro-dynamic'), 'text'),
-		'banner_description'  => array('Premium marine-grade aluminium alloys for shipbuilding and offshore structures. Full class society certification with immediate stock in Singapore.', __('Description', 'alupro-dynamic'), 'textarea'),
+		'banner_description' => array('Premium marine-grade aluminium alloys for shipbuilding and offshore structures. Full class society certification with immediate stock in Singapore.', __('Description', 'alupro-dynamic'), 'textarea'),
 		'banner_primary_text' => array('Download Catalogue', __('Primary Button Text', 'alupro-dynamic'), 'text'),
-		'banner_primary_url'  => array('#', __('Primary Button URL', 'alupro-dynamic'), 'url'),
-		'banner_quote_text'   => array('Request a Quote', __('Quote Button Text', 'alupro-dynamic'), 'text'),
+		'banner_primary_url' => array('#', __('Primary Button URL', 'alupro-dynamic'), 'url'),
+		'banner_quote_text' => array('Request a Quote', __('Quote Button Text', 'alupro-dynamic'), 'text'),
 	);
 
 	foreach ($fields as $setting_id => $field) {
@@ -114,7 +142,7 @@ function alupro_dynamic_customize_register($wp_customize) {
 		$wp_customize->add_setting(
 			$setting_id,
 			array(
-				'default'           => $field[0],
+				'default' => $field[0],
 				'sanitize_callback' => $sanitize_callback,
 			)
 		);
@@ -122,9 +150,9 @@ function alupro_dynamic_customize_register($wp_customize) {
 		$wp_customize->add_control(
 			$setting_id,
 			array(
-				'label'   => $field[1],
+				'label' => $field[1],
 				'section' => 'alupro_home_banner',
-				'type'    => $field[2],
+				'type' => $field[2],
 			)
 		);
 	}
@@ -132,7 +160,7 @@ function alupro_dynamic_customize_register($wp_customize) {
 	$wp_customize->add_setting(
 		'banner_image',
 		array(
-			'default'           => get_theme_file_uri('images/banner-img-1.webp'),
+			'default' => get_theme_file_uri('images/banner-img-1.webp'),
 			'sanitize_callback' => 'esc_url_raw',
 		)
 	);
@@ -142,7 +170,8 @@ function alupro_dynamic_customize_register($wp_customize) {
 			$wp_customize,
 			'banner_image',
 			array(
-				'label'   => __('Banner Background', 'alupro-dynamic'),
+				'label' => __('Banner Background', 'alupro-dynamic'),
+				'description' => __('Recommended size: 1920x1080 pixels.', 'alupro-dynamic'),
 				'section' => 'alupro_home_banner',
 			)
 		)
@@ -150,11 +179,28 @@ function alupro_dynamic_customize_register($wp_customize) {
 }
 add_action('customize_register', 'alupro_dynamic_customize_register');
 
-function alupro_dynamic_asset_url($path) {
+/**
+ * Generate Static Asset URLs.
+ * 
+ * - Called by: Various template files and fallback functions.
+ * - Related Files: header.php, footer.php, template-parts/banner.php, template-parts/about.php.
+ * - Purpose: Prepends the active theme's template directory URI to the provided asset path.
+ */
+function alupro_dynamic_asset_url($path)
+{
 	return esc_url(get_theme_file_uri(ltrim($path, '/')));
 }
 
-function alupro_dynamic_get_logo_url() {
+/**
+ * Get Dynamic Theme Logo URL.
+ * 
+ * - Called by: header.php.
+ * - Related Files: header.php.
+ * - Purpose: Retrieves the user-customized logo URL from the Customizer.
+ *   Falls back to 'images/logo-white.svg' if no custom logo is uploaded.
+ */
+function alupro_dynamic_get_logo_url()
+{
 	$custom_logo_id = get_theme_mod('custom_logo');
 
 	if ($custom_logo_id) {
@@ -168,19 +214,31 @@ function alupro_dynamic_get_logo_url() {
 	return get_theme_file_uri('images/logo-white.svg');
 }
 
-class AluPro_Dynamic_Desktop_Menu_Walker extends Walker_Nav_Menu {
-	public function start_lvl(&$output, $depth = 0, $args = null) {
+/**
+ * Walker Class for Desktop Menu Layout.
+ * 
+ * - Called by: header.php (passed to wp_nav_menu() for 'primary' location).
+ * - Related Files: header.php.
+ * - Purpose: Extends WordPress Walker_Nav_Menu to output custom HTML and Tailwind utility classes
+ *   specific to the desktop dropdown design matching static/index.html navbar structure.
+ */
+class AluPro_Dynamic_Desktop_Menu_Walker extends Walker_Nav_Menu
+{
+	public function start_lvl(&$output, $depth = 0, $args = null)
+	{
 		$output .= '<div class="dropdown absolute left-0 top-full w-66 bg-white rounded-xl shadow-xl pt-3 pb-2 border border-[#190E5D]/10 z-50">';
 	}
 
-	public function end_lvl(&$output, $depth = 0, $args = null) {
+	public function end_lvl(&$output, $depth = 0, $args = null)
+	{
 		$output .= '</div>';
 	}
 
-	public function start_el(&$output, $item, $depth = 0, $args = null, $id = 0) {
+	public function start_el(&$output, $item, $depth = 0, $args = null, $id = 0)
+	{
 		$has_children = in_array('menu-item-has-children', $item->classes, true);
-		$url          = ! empty($item->url) ? $item->url : '#';
-		$title        = apply_filters('the_title', $item->title, $item->ID);
+		$url = !empty($item->url) ? $item->url : '#';
+		$title = apply_filters('the_title', $item->title, $item->ID);
 
 		if (0 === $depth && $has_children) {
 			$output .= '<div class="relative group desktop-dropdown-group">';
@@ -199,26 +257,39 @@ class AluPro_Dynamic_Desktop_Menu_Walker extends Walker_Nav_Menu {
 		$output .= '<a href="' . esc_url($url) . '" class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">' . esc_html($title) . '</a>';
 	}
 
-	public function end_el(&$output, $item, $depth = 0, $args = null) {
+	public function end_el(&$output, $item, $depth = 0, $args = null)
+	{
 		if (0 === $depth && in_array('menu-item-has-children', $item->classes, true)) {
 			$output .= '</div>';
 		}
 	}
 }
 
-class AluPro_Dynamic_Mobile_Menu_Walker extends Walker_Nav_Menu {
-	public function start_lvl(&$output, $depth = 0, $args = null) {
+/**
+ * Walker Class for Mobile Menu Layout.
+ * 
+ * - Called by: header.php (passed to wp_nav_menu() for 'primary' location).
+ * - Related Files: header.php.
+ * - Purpose: Extends WordPress Walker_Nav_Menu to output custom HTML and Tailwind utility classes
+ *   specific to the mobile menu layout matching static/index.html mobile drawer structure.
+ */
+class AluPro_Dynamic_Mobile_Menu_Walker extends Walker_Nav_Menu
+{
+	public function start_lvl(&$output, $depth = 0, $args = null)
+	{
 		$output .= '<div class="mobile-dropdown hidden mt-4 ml-4">';
 	}
 
-	public function end_lvl(&$output, $depth = 0, $args = null) {
+	public function end_lvl(&$output, $depth = 0, $args = null)
+	{
 		$output .= '</div>';
 	}
 
-	public function start_el(&$output, $item, $depth = 0, $args = null, $id = 0) {
+	public function start_el(&$output, $item, $depth = 0, $args = null, $id = 0)
+	{
 		$has_children = in_array('menu-item-has-children', $item->classes, true);
-		$url          = ! empty($item->url) ? $item->url : '#';
-		$title        = apply_filters('the_title', $item->title, $item->ID);
+		$url = !empty($item->url) ? $item->url : '#';
+		$title = apply_filters('the_title', $item->title, $item->ID);
 
 		if (0 === $depth && $has_children) {
 			$output .= '<div>';
@@ -237,28 +308,48 @@ class AluPro_Dynamic_Mobile_Menu_Walker extends Walker_Nav_Menu {
 		$output .= '<a href="' . esc_url($url) . '" class="block py-2 text-[#111827]">' . esc_html($title) . '</a>';
 	}
 
-	public function end_el(&$output, $item, $depth = 0, $args = null) {
+	public function end_el(&$output, $item, $depth = 0, $args = null)
+	{
 		if (0 === $depth && in_array('menu-item-has-children', $item->classes, true)) {
 			$output .= '</div>';
 		}
 	}
 }
 
-function alupro_dynamic_static_desktop_menu() {
+/**
+ * Static Desktop Menu Fallback.
+ * 
+ * - Called by: header.php (used if no 'primary' nav menu is configured in WordPress).
+ * - Related Files: header.php.
+ * - Purpose: Renders the hardcoded static navigation links for desktop screens, matching static/index.html.
+ */
+function alupro_dynamic_static_desktop_menu()
+{
 	?>
 	<a href="<?php echo esc_url(home_url('/')); ?>" class="nav-link text-white/70 hover:text-[#00a2e0]">Home</a>
-	<a href="<?php echo esc_url(home_url('/about-us/')); ?>" class="nav-link text-white/70 hover:text-[#00a2e0]">About Us</a>
+	<a href="<?php echo esc_url(home_url('/about-us/')); ?>" class="nav-link text-white/70 hover:text-[#00a2e0]">About
+		Us</a>
 	<div class="relative group desktop-dropdown-group">
 		<button type="button" class="nav-link flex items-center gap-x-1.5 text-white/70 hover:text-[#00a2e0] py-4">
 			Products
-			<i class="fas fa-chevron-down text-xs text-white/70 transition-transform duration-300 group-hover:rotate-180 group-hover:text-[#00a2e0]"></i>
+			<i
+				class="fas fa-chevron-down text-xs text-white/70 transition-transform duration-300 group-hover:rotate-180 group-hover:text-[#00a2e0]"></i>
 		</button>
-		<div class="dropdown absolute left-0 top-full w-66 bg-white rounded-xl shadow-xl pt-3 pb-2 border border-[#190E5D]/10 z-50">
-			<a href="#sheets-plates-aluminium" class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Marine Grade Aluminium</a>
-			<a href="#structural-grade-aluminium" class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Structural Grade Aluminium</a>
-			<a href="#aerospace-grade-aluminium" class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Aerospace Grade Aluminium</a>
-			<a href="#extrusions-profiles-aluminium" class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Extrusions &amp; Profiles Aluminium </a>
-			<a href="#specialty-range-aluminium" class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Specialty Range Aluminium </a>
+		<div
+			class="dropdown absolute left-0 top-full w-66 bg-white rounded-xl shadow-xl pt-3 pb-2 border border-[#190E5D]/10 z-50">
+			<a href="#sheets-plates-aluminium"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Marine Grade Aluminium</a>
+			<a href="#structural-grade-aluminium"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Structural Grade
+				Aluminium</a>
+			<a href="#aerospace-grade-aluminium"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Aerospace Grade Aluminium</a>
+			<a href="#extrusions-profiles-aluminium"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Extrusions &amp; Profiles
+				Aluminium </a>
+			<a href="#specialty-range-aluminium"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Specialty Range Aluminium
+			</a>
 		</div>
 	</div>
 	<a href="#custom-services" class="nav-link text-white/70 hover:text-[#00a2e0]">Custom Services</a>
@@ -266,12 +357,21 @@ function alupro_dynamic_static_desktop_menu() {
 	<?php
 }
 
-function alupro_dynamic_static_mobile_menu() {
+/**
+ * Static Mobile Menu Fallback.
+ * 
+ * - Called by: header.php (used if no 'primary' nav menu is configured in WordPress).
+ * - Related Files: header.php.
+ * - Purpose: Renders the hardcoded static navigation links for mobile screens, matching static/index.html.
+ */
+function alupro_dynamic_static_mobile_menu()
+{
 	?>
 	<a href="<?php echo esc_url(home_url('/')); ?>" class="font-semibold text-[#111827]">Home</a>
 	<a href="<?php echo esc_url(home_url('/about-us/')); ?>" class="font-semibold text-[#111827]">About Us</a>
 	<div>
-		<button type="button" onclick="toggleMobileDropdown(this)" class="flex items-center justify-between w-full text-left font-semibold text-[#111827]">
+		<button type="button" onclick="toggleMobileDropdown(this)"
+			class="flex items-center justify-between w-full text-left font-semibold text-[#111827]">
 			Products
 			<i class="fas fa-chevron-down text-[#111827] transition-transform"></i>
 		</button>
@@ -279,7 +379,8 @@ function alupro_dynamic_static_mobile_menu() {
 			<a href="#sheets-plates-aluminium" class="block py-2 text-[#111827]">Marine Grade Aluminium</a>
 			<a href="#structural-grade-aluminium" class="block py-2 text-[#111827]">Structural Grade Aluminium</a>
 			<a href="#aerospace-grade-aluminium" class="block py-2 text-[#111827]">Aerospace Grade Aluminium</a>
-			<a href="#extrusions-profiles-aluminium" class="block py-2 text-[#111827]">Extrusions &amp; Profiles Aluminium</a>
+			<a href="#extrusions-profiles-aluminium" class="block py-2 text-[#111827]">Extrusions &amp; Profiles
+				Aluminium</a>
 			<a href="#specialty-range-aluminium" class="block py-2 text-[#111827]">Specialty Range Aluminium</a>
 		</div>
 	</div>
@@ -288,14 +389,23 @@ function alupro_dynamic_static_mobile_menu() {
 	<?php
 }
 
-function alupro_dynamic_static_fragment($start_marker, $end_marker = '') {
+/**
+ * Extract Custom Static Fragment from home-static.html.
+ * 
+ * - Called by: footer.php, aboutus template, contact template, etc.
+ * - Related Files: footer.php, templates/home-static.html.
+ * - Purpose: Reads the static home template, searches for section markers, extracts the desired HTML chunk,
+ *   removes unnecessary static script tags, and rewrites relative image/asset URLs to work dynamically.
+ */
+function alupro_dynamic_static_fragment($start_marker, $end_marker = '')
+{
 	$file = get_theme_file_path('templates/home-static.html');
 
-	if (! file_exists($file)) {
+	if (!file_exists($file)) {
 		return '';
 	}
 
-	$html  = file_get_contents($file);
+	$html = file_get_contents($file);
 	$start = strpos($html, $start_marker);
 
 	if (false === $start) {
@@ -303,7 +413,7 @@ function alupro_dynamic_static_fragment($start_marker, $end_marker = '') {
 	}
 
 	$start += strlen($start_marker);
-	$end    = $end_marker ? strpos($html, $end_marker, $start) : false;
+	$end = $end_marker ? strpos($html, $end_marker, $start) : false;
 
 	if (false === $end) {
 		$end = strlen($html);
@@ -321,23 +431,33 @@ function alupro_dynamic_static_fragment($start_marker, $end_marker = '') {
 	return $fragment;
 }
 
-function alupro_dynamic_static_home_sections() {
+/**
+ * Extract Non-Dynamic Homepage Content Sections.
+ * 
+ * - Called by: front-page.php.
+ * - Related Files: front-page.php, templates/home-static.html.
+ * - Purpose: Extracts all homepage sections from the static template between '<!-- About Section Ends -->'
+ *   and '<!-- Footer Starts -->'. Dynamically updates asset paths and serves them as a single content fragment.
+ */
+function alupro_dynamic_static_home_sections()
+{
 	$file = get_theme_file_path('templates/home-static.html');
 
-	if (! file_exists($file)) {
+	if (!file_exists($file)) {
 		return '';
 	}
 
-	$html      = file_get_contents($file);
-	$about_end = strpos($html, '<!-- About Section Ends -->');
-	$footer    = strpos($html, '<!-- Footer Starts -->');
+	$html = file_get_contents($file);
+	$browse_end = strpos($html, '<!-- Browse Section Ends -->');
+	$footer = strpos($html, '<!-- Footer Starts -->');
 
-	if (false === $about_end || false === $footer) {
+	if (false === $browse_end || false === $footer) {
 		return '';
 	}
 
-	$about_end += strlen('<!-- About Section Ends -->');
-	$fragment   = substr($html, $about_end, $footer - $about_end);
+	$browse_end += strlen('<!-- Browse Section Ends -->');
+	$fragment = substr($html, $browse_end, $footer - $browse_end);
+
 	$fragment = str_replace(
 		array('src="images/', "src='images/", 'href="images/', "href='images/", 'url("images/', "url('images/"),
 		array('src="' . esc_url(get_theme_file_uri('images/')), "src='" . esc_url(get_theme_file_uri('images/')), 'href="' . esc_url(get_theme_file_uri('images/')), "href='" . esc_url(get_theme_file_uri('images/')), 'url("' . esc_url(get_theme_file_uri('images/')), "url('" . esc_url(get_theme_file_uri('images/'))),
@@ -346,3 +466,48 @@ function alupro_dynamic_static_home_sections() {
 
 	return $fragment;
 }
+
+/**
+ * Load Modular ACF Fields.
+ */
+require_once get_template_directory() . '/inc/acf/acf-loader.php';
+
+
+/**
+ * Get the About Us Page ID dynamically.
+ */
+function alupro_get_about_page_id()
+{
+	// 1. If we are on the About Us page template, use the current page ID
+	if (is_page_template('page-about-us.php')) {
+		return get_the_ID();
+	}
+
+	// 2. Query for pages with the page-about-us.php template
+	$pages = get_posts(array(
+		'post_type' => 'page',
+		'meta_key' => '_wp_page_template',
+		'meta_value' => 'page-about-us.php',
+		'posts_per_page' => 1,
+	));
+
+	if (!empty($pages)) {
+		return $pages[0]->ID;
+	}
+
+	// 3. Fallback: try by slug 'about-us'
+	$about_page = get_page_by_path('about-us');
+	if ($about_page) {
+		return $about_page->ID;
+	}
+
+	// 4. Fallback: try by slug 'aboutus'
+	$about_page = get_page_by_path('aboutus');
+	if ($about_page) {
+		return $about_page->ID;
+	}
+
+	return null;
+}
+
+
