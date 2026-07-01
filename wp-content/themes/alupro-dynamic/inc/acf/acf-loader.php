@@ -13,6 +13,7 @@ if ( ! function_exists('acf_add_local_field_group') ) {
 $acf_files = array(
 	'about-fields.php',
 	'browse-fields.php',
+	'product-fields.php',
 );
 
 

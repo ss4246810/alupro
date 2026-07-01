@@ -1,0 +1,69 @@
+/* Visual Editor Stylesheet for AluPro Dynamic Theme */
+
+body.mce-content-body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #4B5563;
+    line-height: 1.5;
+    padding: 20px;
+    background-color: #ffffff;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Styling table tags in visual editor to match the front-end layout */
+body.mce-content-body table {
+    width: 100%;
+    min-width: 560px;
+    text-align: left;
+    border-collapse: collapse;
+    margin: 20px 0;
+    border: 1px solid rgba(25, 14, 93, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+body.mce-content-body thead {
+    background-color: #190E5D;
+    color: #ffffff;
+}
+
+body.mce-content-body th {
+    padding: 12px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    border-bottom: 1px solid rgba(25, 14, 93, 0.15);
+    background-color: #190E5D;
+    color: #ffffff;
+}
+
+body.mce-content-body td {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #4B5563;
+    border-bottom: 1px solid rgba(25, 14, 93, 0.1);
+    vertical-align: top;
+}
+
+/* Header style for row groups (td with rowspan, e.g. Thickness) */
+body.mce-content-body td[rowspan] {
+    font-size: 16px;
+    font-weight: 700;
+    color: #180f5e;
+    background-color: #EAF7FF;
+}
+
+/* Zebra / alternating row colors */
+body.mce-content-body tr:nth-child(even) td:not([rowspan]) {
+    background-color: #F8FAFC;
+}
+
+/* Make sure paragraphs and other editor content look nice */
+body.mce-content-body p {
+    margin-bottom: 1.5em;
+    font-size: 15px;
+    line-height: 1.6;
+}

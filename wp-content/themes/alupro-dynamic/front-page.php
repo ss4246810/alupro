@@ -13,6 +13,7 @@ get_template_part('template-parts/banner');
 <?php
 get_template_part('template-parts/about');
 get_template_part('template-parts/browse');
+get_template_part('template-parts/product-sections');
 
 echo alupro_dynamic_static_home_sections();
 

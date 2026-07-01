@@ -448,15 +448,31 @@ function alupro_dynamic_static_home_sections()
 	}
 
 	$html = file_get_contents($file);
-	$browse_end = strpos($html, '<!-- Browse Section Ends -->');
+
+	// Start loading static sections after the dynamic product sections end (Specialty Range is the last one)
+	$start_pos = strpos($html, '<!-- Specialty Range Aluminium Section Ends -->');
+	if (false !== $start_pos) {
+		$start_pos += strlen('<!-- Specialty Range Aluminium Section Ends -->');
+	} else {
+		// Fallback to older markers if specialty range marker is not found
+		$start_pos = strpos($html, '<!-- Sheets & Plates Aluminium Section Ends -->');
+		if (false !== $start_pos) {
+			$start_pos += strlen('<!-- Sheets & Plates Aluminium Section Ends -->');
+		} else {
+			$start_pos = strpos($html, '<!-- Browse Section Ends -->');
+			if (false !== $start_pos) {
+				$start_pos += strlen('<!-- Browse Section Ends -->');
+			}
+		}
+	}
+
 	$footer = strpos($html, '<!-- Footer Starts -->');
 
-	if (false === $browse_end || false === $footer) {
+	if (false === $start_pos || false === $footer) {
 		return '';
 	}
 
-	$browse_end += strlen('<!-- Browse Section Ends -->');
-	$fragment = substr($html, $browse_end, $footer - $browse_end);
+	$fragment = substr($html, $start_pos, $footer - $start_pos);
 
 	$fragment = str_replace(
 		array('src="images/', "src='images/", 'href="images/', "href='images/", 'url("images/', "url('images/"),
@@ -509,5 +525,192 @@ function alupro_get_about_page_id()
 
 	return null;
 }
+
+/**
+ * Register CPT: Aluminium Product
+ * Register Taxonomy: Product Category
+ */
+function alupro_dynamic_register_cpts()
+{
+	// 1. Taxonomy
+	$tax_labels = array(
+		'name' => _x('Product Categories', 'taxonomy general name', 'alupro-dynamic'),
+		'singular_name' => _x('Product Category', 'taxonomy singular name', 'alupro-dynamic'),
+		'search_items' => __('Search Product Categories', 'alupro-dynamic'),
+		'all_items' => __('All Product Categories', 'alupro-dynamic'),
+		'parent_item' => __('Parent Product Category', 'alupro-dynamic'),
+		'parent_item_colon' => __('Parent Product Category:', 'alupro-dynamic'),
+		'edit_item' => __('Edit Product Category', 'alupro-dynamic'),
+		'update_item' => __('Update Product Category', 'alupro-dynamic'),
+		'add_new_item' => __('Add New Product Category', 'alupro-dynamic'),
+		'new_item_name' => __('New Product Category Name', 'alupro-dynamic'),
+		'menu_name' => __('Product Categories', 'alupro-dynamic'),
+	);
+
+	$tax_args = array(
+		'hierarchical' => true,
+		'labels' => $tax_labels,
+		'show_ui' => true,
+		'show_admin_column' => true,
+		'query_var' => true,
+		'rewrite' => array('slug' => 'product-category'),
+		'show_in_rest' => true,
+	);
+
+	register_taxonomy('product_category', array('aluminium_product'), $tax_args);
+
+	// 2. Custom Post Type
+	$cpt_labels = array(
+		'name' => _x('Aluminium Products', 'Post type general name', 'alupro-dynamic'),
+		'singular_name' => _x('Aluminium Product', 'Post type singular name', 'alupro-dynamic'),
+		'menu_name' => _x('Aluminium Products', 'Admin Menu text', 'alupro-dynamic'),
+		'name_admin_bar' => _x('Aluminium Product', 'Add New on Toolbar', 'alupro-dynamic'),
+		'add_new' => __('Add New', 'alupro-dynamic'),
+		'add_new_item' => __('Add New Aluminium Product', 'alupro-dynamic'),
+		'new_item' => __('New Aluminium Product', 'alupro-dynamic'),
+		'edit_item' => __('Edit Aluminium Product', 'alupro-dynamic'),
+		'view_item' => __('View Aluminium Product', 'alupro-dynamic'),
+		'all_items' => __('All Products', 'alupro-dynamic'),
+		'search_items' => __('Search Aluminium Products', 'alupro-dynamic'),
+		'not_found' => __('No products found.', 'alupro-dynamic'),
+		'not_found_in_trash' => __('No products found in Trash.', 'alupro-dynamic'),
+	);
+
+	$cpt_args = array(
+		'labels' => $cpt_labels,
+		'public' => true,
+		'publicly_queryable' => true,
+		'show_ui' => true,
+		'show_in_menu' => true,
+		'query_var' => true,
+		'rewrite' => array('slug' => 'product'),
+		'capability_type' => 'post',
+		'has_archive' => true,
+		'hierarchical' => false,
+		'menu_position' => 5,
+		'menu_icon' => 'dashicons-grid-view',
+		'supports' => array('title', 'editor', 'thumbnail', 'page-attributes'),
+		'show_in_rest' => true,
+	);
+
+	register_post_type('aluminium_product', $cpt_args);
+}
+add_action('init', 'alupro_dynamic_register_cpts');
+
+/**
+ * Automatically pre-create taxonomy terms for Product Category taxonomy.
+ */
+function alupro_dynamic_precreate_categories()
+{
+	if (!taxonomy_exists('product_category')) {
+		return;
+	}
+
+	$default_terms = array(
+		'Marine Grade' => 'marine-grade',
+		'Structural Grade' => 'structural-grade',
+		'Aerospace Grade' => 'aerospace-grade',
+		'Product Profiles' => 'extrusions-profiles',
+		'Specialty Grade' => 'specialty-grade',
+	);
+
+	foreach ($default_terms as $name => $slug) {
+		if (!term_exists($slug, 'product_category')) {
+			wp_insert_term(
+				$name,
+				'product_category',
+				array(
+					'slug' => $slug,
+				)
+			);
+		}
+	}
+}
+add_action('init', 'alupro_dynamic_precreate_categories', 15);
+
+/**
+ * Register TinyMCE table plugin and add its button to the toolbar.
+ */
+function alupro_add_tinymce_table_plugin($plugin_array)
+{
+	$plugin_array['table'] = get_template_directory_uri() . '/js/tinymce/table/plugin.min.js';
+	return $plugin_array;
+}
+add_filter('mce_external_plugins', 'alupro_add_tinymce_table_plugin');
+
+function alupro_add_tinymce_table_button($buttons)
+{
+	array_push($buttons, 'table');
+	return $buttons;
+}
+add_filter('mce_buttons', 'alupro_add_tinymce_table_button');
+
+/**
+ * Register custom stylesheet for TinyMCE visual editor.
+ */
+function alupro_add_editor_styles()
+{
+	add_editor_style('css/editor-style.css');
+}
+add_action('admin_init', 'alupro_add_editor_styles');
+
+/**
+ * Set default editor content for new Aluminium Product posts.
+ */
+function alupro_default_product_editor_content($content, $post)
+{
+	if ('aluminium_product' === $post->post_type) {
+		$content = '
+<table>
+	<thead>
+		<tr>
+			<th>Thickness</th>
+			<th>Width</th>
+			<th>Length</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td rowspan="4">3.0mm</td>
+			<td>1220 mm</td>
+			<td>2440 mm</td>
+		</tr>
+		<tr>
+			<td>1500 mm</td>
+			<td>6000 mm</td>
+		</tr>
+		<tr>
+			<td>2000 mm</td>
+			<td>6000 mm</td>
+		</tr>
+		<tr>
+			<td>2200 mm</td>
+			<td>9000 mm</td>
+		</tr>
+		<tr>
+			<td rowspan="4">4.0mm</td>
+			<td>1220 mm</td>
+			<td>2440 mm</td>
+		</tr>
+		<tr>
+			<td>1500 mm</td>
+			<td>6000 mm</td>
+		</tr>
+		<tr>
+			<td>2000 mm</td>
+			<td>6000 mm</td>
+		</tr>
+		<tr>
+			<td>2200 mm</td>
+			<td>9000 mm</td>
+		</tr>
+	</tbody>
+</table>
+<p>&nbsp;</p>
+';
+	}
+	return $content;
+}
+add_filter('default_content', 'alupro_default_product_editor_content', 10, 2);
 
 

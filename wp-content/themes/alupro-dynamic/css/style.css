@@ -275,3 +275,53 @@ body {
     flex-basis: calc((100% - 48px) / 3);
   }
 }
+
+/* Frontend styling for Classic Editor generated tables inside the PDF schedule container */
+.html-to-pdf table {
+  width: 100%;
+  min-width: 560px;
+  text-align: left;
+  border-collapse: collapse;
+  margin: 20px 0;
+  border: 1px solid rgba(25, 14, 93, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.html-to-pdf table thead {
+  background-color: #190E5D;
+  color: #ffffff;
+}
+
+.html-to-pdf table th {
+  padding: 12px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  border-bottom: 1px solid rgba(25, 14, 93, 0.15);
+  background-color: #190E5D;
+  color: #ffffff;
+}
+
+.html-to-pdf table td {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #4B5563;
+  border-bottom: 1px solid rgba(25, 14, 93, 0.15);
+  vertical-align: top;
+}
+
+/* Highlight style for group header cell (td with rowspan, e.g. Thickness) */
+.html-to-pdf table td[rowspan] {
+  font-size: 16px;
+  font-weight: 700;
+  color: #180f5e;
+  background-color: #EAF7FF;
+}
+
+/* Zebra / alternating row colors */
+.html-to-pdf table tr:nth-child(even) td:not([rowspan]) {
+  background-color: #F8FAFC;
+}
