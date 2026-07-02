@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 
 /**
  * Theme Setup Configuration.
- * 
+ *
  * - Called by: WordPress core (hooked to 'after_setup_theme' action).
  * - Related Files: Enqueued during initialization, configures global theme behavior.
  * - Purpose: Registers theme support for HTML5, custom-logo, title-tag, post-thumbnails,
@@ -47,7 +47,7 @@ add_filter('use_widgets_block_editor', '__return_false');
 
 /**
  * Enqueue Theme Stylesheets and Scripts.
- * 
+ *
  * - Called by: WordPress core (hooked to 'wp_enqueue_scripts' action).
  * - Related Files: header.php (via wp_head()) and footer.php (via wp_footer()).
  * - Purpose: Enqueues dynamic stylesheets (Google Fonts, Font Awesome, css/style.css, active theme's style.css)
@@ -103,10 +103,10 @@ add_action('wp_enqueue_scripts', 'alupro_dynamic_enqueue_assets');
 
 /**
  * Register Customizer Settings and Controls.
- * 
+ *
  * - Called by: WordPress Customizer manager (hooked to 'customize_register' action).
  * - Related Files: template-parts/banner.php (uses the settings registered here).
- * - Purpose: Defines fields for customizer section 'Home Banner' allowing dynamic edits of 
+ * - Purpose: Defines fields for customizer section 'Home Banner' allowing dynamic edits of
  *   eyebrow, title, title accent, description, primary button URL & text, quote button text,
  *   and recommended 1920x1080 resolution background image.
  */
@@ -181,7 +181,7 @@ add_action('customize_register', 'alupro_dynamic_customize_register');
 
 /**
  * Generate Static Asset URLs.
- * 
+ *
  * - Called by: Various template files and fallback functions.
  * - Related Files: header.php, footer.php, template-parts/banner.php, template-parts/about.php.
  * - Purpose: Prepends the active theme's template directory URI to the provided asset path.
@@ -193,7 +193,7 @@ function alupro_dynamic_asset_url($path)
 
 /**
  * Get Dynamic Theme Logo URL.
- * 
+ *
  * - Called by: header.php.
  * - Related Files: header.php.
  * - Purpose: Retrieves the user-customized logo URL from the Customizer.
@@ -216,7 +216,7 @@ function alupro_dynamic_get_logo_url()
 
 /**
  * Walker Class for Desktop Menu Layout.
- * 
+ *
  * - Called by: header.php (passed to wp_nav_menu() for 'primary' location).
  * - Related Files: header.php.
  * - Purpose: Extends WordPress Walker_Nav_Menu to output custom HTML and Tailwind utility classes
@@ -267,7 +267,7 @@ class AluPro_Dynamic_Desktop_Menu_Walker extends Walker_Nav_Menu
 
 /**
  * Walker Class for Mobile Menu Layout.
- * 
+ *
  * - Called by: header.php (passed to wp_nav_menu() for 'primary' location).
  * - Related Files: header.php.
  * - Purpose: Extends WordPress Walker_Nav_Menu to output custom HTML and Tailwind utility classes
@@ -318,7 +318,7 @@ class AluPro_Dynamic_Mobile_Menu_Walker extends Walker_Nav_Menu
 
 /**
  * Static Desktop Menu Fallback.
- * 
+ *
  * - Called by: header.php (used if no 'primary' nav menu is configured in WordPress).
  * - Related Files: header.php.
  * - Purpose: Renders the hardcoded static navigation links for desktop screens, matching static/index.html.
@@ -359,7 +359,7 @@ function alupro_dynamic_static_desktop_menu()
 
 /**
  * Static Mobile Menu Fallback.
- * 
+ *
  * - Called by: header.php (used if no 'primary' nav menu is configured in WordPress).
  * - Related Files: header.php.
  * - Purpose: Renders the hardcoded static navigation links for mobile screens, matching static/index.html.
@@ -391,7 +391,7 @@ function alupro_dynamic_static_mobile_menu()
 
 /**
  * Extract Custom Static Fragment from home-static.html.
- * 
+ *
  * - Called by: footer.php, aboutus template, contact template, etc.
  * - Related Files: footer.php, templates/home-static.html.
  * - Purpose: Reads the static home template, searches for section markers, extracts the desired HTML chunk,
@@ -433,7 +433,7 @@ function alupro_dynamic_static_fragment($start_marker, $end_marker = '')
 
 /**
  * Extract Non-Dynamic Homepage Content Sections.
- * 
+ *
  * - Called by: front-page.php.
  * - Related Files: front-page.php, templates/home-static.html.
  * - Purpose: Extracts all homepage sections from the static template between '<!-- About Section Ends -->'
