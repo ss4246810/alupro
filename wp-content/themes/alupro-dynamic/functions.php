@@ -487,6 +487,7 @@ function alupro_dynamic_static_home_sections()
  * Load Modular ACF Fields.
  */
 require_once get_template_directory() . '/inc/acf/acf-loader.php';
+require_once get_template_directory() . '/inc/product-schedule-pdf.php';
 
 
 /**
@@ -667,6 +668,7 @@ function alupro_default_product_editor_content($content, $post)
 			<th>Thickness</th>
 			<th>Width</th>
 			<th>Length</th>
+			<th>Availability</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -674,35 +676,43 @@ function alupro_default_product_editor_content($content, $post)
 			<td rowspan="4">3.0mm</td>
 			<td>1220 mm</td>
 			<td>2440 mm</td>
+			<td>Stock</td>
 		</tr>
 		<tr>
 			<td>1500 mm</td>
 			<td>6000 mm</td>
+			<td>Stock</td>
 		</tr>
 		<tr>
 			<td>2000 mm</td>
 			<td>6000 mm</td>
+			<td>Stock</td>
 		</tr>
 		<tr>
 			<td>2200 mm</td>
 			<td>9000 mm</td>
+			<td>Indent</td>
 		</tr>
 		<tr>
 			<td rowspan="4">4.0mm</td>
 			<td>1220 mm</td>
 			<td>2440 mm</td>
+			<td>Stock</td>
 		</tr>
 		<tr>
 			<td>1500 mm</td>
 			<td>6000 mm</td>
+			<td>Stock</td>
 		</tr>
 		<tr>
 			<td>2000 mm</td>
 			<td>6000 mm</td>
+			<td>Stock</td>
 		</tr>
 		<tr>
 			<td>2200 mm</td>
 			<td>9000 mm</td>
+			<td>Indent</td>
 		</tr>
 	</tbody>
 </table>
@@ -712,5 +722,3 @@ function alupro_default_product_editor_content($content, $post)
 	return $content;
 }
 add_filter('default_content', 'alupro_default_product_editor_content', 10, 2);
-
-

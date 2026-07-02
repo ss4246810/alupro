@@ -183,15 +183,15 @@ acf_add_local_field_group(array(
 			'label' => __('Table Column Headers (Comma separated)', 'alupro-dynamic'),
 			'name' => 'product_table_headers',
 			'type' => 'text',
-			'default_value' => 'Thickness, Width, Length',
-			'instructions' => __('e.g. Thickness, Width, Length. Change as needed for custom table structures.', 'alupro-dynamic'),
+			'default_value' => 'Thickness, Width, Length, Availability',
+			'instructions' => __('e.g. Thickness, Width, Length, Availability. Change as needed for custom table structures.', 'alupro-dynamic'),
 		),
 		array(
 			'key' => 'field_prod_table_data',
 			'label' => __('Table Spreadsheet Data (Copy-Paste from Excel)', 'alupro-dynamic'),
 			'name' => 'product_table_data',
 			'type' => 'textarea',
-			'instructions' => __('Copy a range of cells directly from Microsoft Excel (or a TSV/CSV format) and paste here. Leave first cell empty in rows to span thickness rowspan from cells above. Format: Column1 [tab] Column2 [tab] Column3...', 'alupro-dynamic'),
+			'instructions' => __('Copy a range of cells directly from Microsoft Excel (or a TSV/CSV format) and paste here. Leave first cell empty in rows to span thickness rowspan from cells above. Format: Thickness [tab] Width [tab] Length [tab] Availability.', 'alupro-dynamic'),
 		),
 	),
 	'location' => array(
