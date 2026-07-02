@@ -174,6 +174,147 @@ function alupro_dynamic_dom_cell_text($cell)
 	return trim($text);
 }
 
+function alupro_dynamic_normalize_background_color($color)
+{
+	$color = strtolower(trim(html_entity_decode((string) $color, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+	$color = preg_replace('/\s+/', ' ', $color);
+
+	if ('' === $color || in_array($color, array('transparent', 'none', 'inherit', 'initial', 'unset'), true)) {
+		return '';
+	}
+
+	if (preg_match('/^#([0-9a-f]{3}|[0-9a-f]{6})$/i', $color)) {
+		return $color;
+	}
+
+	if (preg_match('/^rgba?\(([^)]+)\)$/i', $color, $matches)) {
+		$parts = array_map('trim', explode(',', $matches[1]));
+
+		if (count($parts) >= 3) {
+			$rgb = array();
+
+			for ($i = 0; $i < 3; $i++) {
+				$part = $parts[$i];
+				$value = false !== strpos($part, '%') ? (float) $part * 2.55 : (float) $part;
+				$rgb[] = max(0, min(255, (int) round($value)));
+			}
+
+			if (isset($parts[3]) && (float) $parts[3] <= 0) {
+				return '';
+			}
+
+			return sprintf('#%02x%02x%02x', $rgb[0], $rgb[1], $rgb[2]);
+		}
+	}
+
+	$named_colors = array(
+		'black' => '#000000',
+		'blue' => '#0000ff',
+		'gray' => '#808080',
+		'green' => '#008000',
+		'grey' => '#808080',
+		'orange' => '#ffa500',
+		'purple' => '#800080',
+		'red' => '#ff0000',
+		'silver' => '#c0c0c0',
+		'white' => '#ffffff',
+		'yellow' => '#ffff00',
+	);
+
+	return isset($named_colors[$color]) ? $named_colors[$color] : '';
+}
+
+function alupro_dynamic_extract_background_color($node)
+{
+	$background = '';
+
+	if ($node->hasAttribute('style')) {
+		$style = html_entity_decode($node->getAttribute('style'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+		if (preg_match('/(?:^|;)\s*background-color\s*:\s*([^;]+)/i', $style, $matches)) {
+			$background = alupro_dynamic_normalize_background_color($matches[1]);
+		}
+
+		if ('' === $background && preg_match('/(?:^|;)\s*background\s*:\s*([^;]+)/i', $style, $matches)) {
+			if (preg_match('/#[0-9a-f]{3,6}\b|rgba?\([^)]+\)|\b[a-z]+\b/i', $matches[1], $color_match)) {
+				$background = alupro_dynamic_normalize_background_color($color_match[0]);
+			}
+		}
+	}
+
+	if ('' === $background && $node->hasAttribute('bgcolor')) {
+		$background = alupro_dynamic_normalize_background_color($node->getAttribute('bgcolor'));
+	}
+
+	return $background;
+}
+
+function alupro_dynamic_normalize_background_matrix($backgrounds, $row_count, $column_count)
+{
+	$normalized = array();
+
+	for ($i = 0; $i < $row_count; $i++) {
+		$row = isset($backgrounds[$i]) && is_array($backgrounds[$i]) ? $backgrounds[$i] : array();
+		$row = array_values(array_map('alupro_dynamic_normalize_background_color', $row));
+		$row = array_pad($row, $column_count, '');
+		$normalized[] = array_slice($row, 0, $column_count);
+	}
+
+	return $normalized;
+}
+
+function alupro_dynamic_normalize_background_list($backgrounds, $row_count)
+{
+	$normalized = array();
+
+	for ($i = 0; $i < $row_count; $i++) {
+		$normalized[] = isset($backgrounds[$i]) ? alupro_dynamic_normalize_background_color($backgrounds[$i]) : '';
+	}
+
+	return $normalized;
+}
+
+function alupro_dynamic_apply_processed_row_backgrounds($processed_rows, $cell_backgrounds, $row_backgrounds)
+{
+	foreach ($processed_rows as $index => $row) {
+		$backgrounds = isset($cell_backgrounds[$index]) ? $cell_backgrounds[$index] : array();
+		$processed_rows[$index]['background'] = isset($backgrounds[0]) ? $backgrounds[0] : '';
+		$processed_rows[$index]['cell_backgrounds'] = array_slice($backgrounds, 1);
+		$processed_rows[$index]['row_background'] = isset($row_backgrounds[$index]) ? $row_backgrounds[$index] : '';
+	}
+
+	return $processed_rows;
+}
+
+function alupro_dynamic_has_backgrounds($table_background, $header_backgrounds, $row_backgrounds, $body_row_backgrounds = array())
+{
+	if ('' !== $table_background) {
+		return true;
+	}
+
+	foreach ($header_backgrounds as $background) {
+		if ('' !== $background) {
+			return true;
+		}
+	}
+
+	foreach ($row_backgrounds as $row) {
+		foreach ($row as $background) {
+			if ('' !== $background) {
+				return true;
+			}
+		}
+	}
+
+	foreach ($body_row_backgrounds as $background) {
+		if ('' !== $background) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function alupro_dynamic_extract_editor_schedule_table($content)
 {
 	$content = trim((string) $content);
@@ -181,7 +322,12 @@ function alupro_dynamic_extract_editor_schedule_table($content)
 	if ('' === $content || false === stripos($content, '<table')) {
 		return array(
 			'headers' => array(),
+			'header_backgrounds' => array(),
 			'rows' => array(),
+			'row_backgrounds' => array(),
+			'body_row_backgrounds' => array(),
+			'table_background' => '',
+			'has_backgrounds' => false,
 		);
 	}
 
@@ -196,16 +342,23 @@ function alupro_dynamic_extract_editor_schedule_table($content)
 	if (0 === $tables->length) {
 		return array(
 			'headers' => array(),
+			'header_backgrounds' => array(),
 			'rows' => array(),
+			'row_backgrounds' => array(),
+			'body_row_backgrounds' => array(),
+			'table_background' => '',
+			'has_backgrounds' => false,
 		);
 	}
 
 	$table = $tables->item(0);
+	$table_background = alupro_dynamic_extract_background_color($table);
 	$all_rows = array();
 
 	foreach ($table->getElementsByTagName('tr') as $tr) {
 		$cells = array();
 		$has_header_cell = false;
+		$row_background = alupro_dynamic_extract_background_color($tr);
 
 		foreach ($tr->childNodes as $node) {
 			if (XML_ELEMENT_NODE !== $node->nodeType) {
@@ -225,6 +378,7 @@ function alupro_dynamic_extract_editor_schedule_table($content)
 			$cells[] = array(
 				'text' => alupro_dynamic_dom_cell_text($node),
 				'rowspan' => max(1, (int) $node->getAttribute('rowspan')),
+				'background' => alupro_dynamic_extract_background_color($node),
 			);
 		}
 
@@ -232,12 +386,16 @@ function alupro_dynamic_extract_editor_schedule_table($content)
 			$all_rows[] = array(
 				'cells' => $cells,
 				'is_header' => $has_header_cell,
+				'row_background' => $row_background,
 			);
 		}
 	}
 
 	$headers = array();
+	$header_backgrounds = array();
 	$body_rows = array();
+	$body_backgrounds = array();
+	$body_row_backgrounds = array();
 	$header_consumed = false;
 	$span_remaining = 0;
 
@@ -245,6 +403,7 @@ function alupro_dynamic_extract_editor_schedule_table($content)
 		if (!$header_consumed && $row['is_header']) {
 			foreach ($row['cells'] as $cell) {
 				$headers[] = $cell['text'];
+				$header_backgrounds[] = $cell['background'];
 			}
 
 			$header_consumed = true;
@@ -252,25 +411,106 @@ function alupro_dynamic_extract_editor_schedule_table($content)
 		}
 
 		$text_cells = array();
+		$background_cells = array();
 
 		foreach ($row['cells'] as $cell) {
 			$text_cells[] = $cell['text'];
+			$background_cells[] = $cell['background'];
 		}
 
 		if ($span_remaining > 0) {
 			array_unshift($text_cells, '');
+			array_unshift($background_cells, '');
 			$span_remaining--;
 		} elseif (!empty($row['cells'])) {
 			$span_remaining = max(0, (int) $row['cells'][0]['rowspan'] - 1);
 		}
 
 		$body_rows[] = $text_cells;
+		$body_backgrounds[] = $background_cells;
+		$body_row_backgrounds[] = $row['row_background'];
 	}
 
 	return array(
 		'headers' => $headers,
+		'header_backgrounds' => $header_backgrounds,
 		'rows' => $body_rows,
+		'row_backgrounds' => $body_backgrounds,
+		'body_row_backgrounds' => $body_row_backgrounds,
+		'table_background' => $table_background,
+		'has_backgrounds' => alupro_dynamic_has_backgrounds($table_background, $header_backgrounds, $body_backgrounds, $body_row_backgrounds),
 	);
+}
+
+function alupro_dynamic_get_pdf_url_from_file_field($file)
+{
+	$url = '';
+	$attachment_id = 0;
+
+	if (is_array($file)) {
+		if (!empty($file['ID'])) {
+			$attachment_id = absint($file['ID']);
+		} elseif (!empty($file['id'])) {
+			$attachment_id = absint($file['id']);
+		}
+
+		if (!empty($file['url']) && is_string($file['url'])) {
+			$url = trim($file['url']);
+		}
+	} elseif (is_numeric($file)) {
+		$attachment_id = absint($file);
+	} elseif (is_string($file)) {
+		$file = trim($file);
+
+		if (is_numeric($file)) {
+			$attachment_id = absint($file);
+		} else {
+			$url = $file;
+		}
+	}
+
+	if ($attachment_id) {
+		$attachment_url = wp_get_attachment_url($attachment_id);
+
+		if ($attachment_url && alupro_dynamic_is_pdf_url($attachment_url, $attachment_id)) {
+			return esc_url_raw($attachment_url);
+		}
+	}
+
+	if ('' === $url) {
+		return '';
+	}
+
+	$resolved_attachment_id = 0;
+
+	if (function_exists('url_to_postid')) {
+		$resolved_attachment_id = absint(url_to_postid($url));
+	}
+
+	if ($resolved_attachment_id && 'attachment' === get_post_type($resolved_attachment_id)) {
+		$attachment_url = wp_get_attachment_url($resolved_attachment_id);
+
+		if ($attachment_url && alupro_dynamic_is_pdf_url($attachment_url, $resolved_attachment_id)) {
+			return esc_url_raw($attachment_url);
+		}
+	}
+
+	if (alupro_dynamic_is_pdf_url($url)) {
+		return esc_url_raw($url);
+	}
+
+	return '';
+}
+
+function alupro_dynamic_is_pdf_url($url, $attachment_id = 0)
+{
+	if ($attachment_id && 'application/pdf' === get_post_mime_type($attachment_id)) {
+		return true;
+	}
+
+	$path = wp_parse_url($url, PHP_URL_PATH);
+
+	return 'pdf' === strtolower(pathinfo((string) $path, PATHINFO_EXTENSION));
 }
 
 function alupro_get_product_schedule_data($post_id)
@@ -296,7 +536,11 @@ function alupro_get_product_schedule_data($post_id)
 		$image = get_theme_file_uri('images/plate-img.jpg');
 	}
 
-	$catalog_pdf = function_exists('get_field') ? get_field('product_catalog_pdf', $post_id) : '';
+	$uploaded_catalog_pdf = function_exists('get_field') ? get_field('product_catalog_pdf', $post_id) : '';
+	$uploaded_catalog_pdf = alupro_dynamic_get_pdf_url_from_file_field($uploaded_catalog_pdf);
+	$catalog_pdf = $uploaded_catalog_pdf;
+	$use_catalog_pdf = function_exists('get_field') ? (bool) get_field('product_use_catalog_pdf', $post_id) : false;
+
 	if (empty($catalog_pdf)) {
 		$catalog_pdf = get_theme_file_uri('images/PDF-Design.pdf');
 	}
@@ -309,14 +553,31 @@ function alupro_get_product_schedule_data($post_id)
 
 	$table_data = function_exists('get_field') ? get_field('product_table_data', $post_id) : '';
 	$source = 'acf';
+	$header_backgrounds = array();
+	$row_backgrounds = array();
+	$body_row_backgrounds = array();
+	$table_background = '';
+	$editor_table = alupro_dynamic_extract_editor_schedule_table(get_post_field('post_content', $post_id));
 
 	if ('' !== trim((string) $table_data)) {
 		$raw_rows = alupro_parse_spreadsheet_table($table_data);
-	} else {
-		$editor_table = alupro_dynamic_extract_editor_schedule_table(get_post_field('post_content', $post_id));
 
+		if (!empty($editor_table['has_backgrounds'])) {
+			$header_backgrounds = $editor_table['header_backgrounds'];
+			$table_background = $editor_table['table_background'];
+
+			if (count($editor_table['rows']) === count($raw_rows)) {
+				$row_backgrounds = $editor_table['row_backgrounds'];
+				$body_row_backgrounds = $editor_table['body_row_backgrounds'];
+			}
+		}
+	} else {
 		if (!empty($editor_table['rows'])) {
 			$raw_rows = $editor_table['rows'];
+			$row_backgrounds = $editor_table['row_backgrounds'];
+			$body_row_backgrounds = $editor_table['body_row_backgrounds'];
+			$header_backgrounds = $editor_table['header_backgrounds'];
+			$table_background = $editor_table['table_background'];
 			$source = 'editor';
 
 			if (!empty($editor_table['headers'])) {
@@ -340,7 +601,11 @@ function alupro_get_product_schedule_data($post_id)
 
 	$headers = array_slice($headers, 0, $column_count);
 	$raw_rows = alupro_dynamic_normalize_schedule_rows($raw_rows, $column_count);
+	$row_backgrounds = alupro_dynamic_normalize_background_matrix($row_backgrounds, count($raw_rows), $column_count);
+	$body_row_backgrounds = alupro_dynamic_normalize_background_list($body_row_backgrounds, count($raw_rows));
+	$header_backgrounds = array_pad(array_slice(array_map('alupro_dynamic_normalize_background_color', $header_backgrounds), 0, $column_count), $column_count, '');
 	$processed_rows = alupro_compute_table_rowspans($raw_rows);
+	$processed_rows = alupro_dynamic_apply_processed_row_backgrounds($processed_rows, $row_backgrounds, $body_row_backgrounds);
 
 	return array(
 		'post_id' => $post_id,
@@ -349,9 +614,15 @@ function alupro_get_product_schedule_data($post_id)
 		'certifications' => $certifications,
 		'image' => $image,
 		'catalog_pdf' => $catalog_pdf,
+		'use_catalog_pdf' => $use_catalog_pdf && !empty($uploaded_catalog_pdf),
 		'headers' => $headers,
+		'header_backgrounds' => $header_backgrounds,
 		'rows' => $raw_rows,
+		'row_backgrounds' => $row_backgrounds,
+		'body_row_backgrounds' => $body_row_backgrounds,
 		'processed_rows' => $processed_rows,
+		'table_background' => alupro_dynamic_normalize_background_color($table_background),
+		'has_custom_backgrounds' => alupro_dynamic_has_backgrounds($table_background, $header_backgrounds, $row_backgrounds, $body_row_backgrounds),
 		'source' => $source,
 	);
 }
@@ -366,19 +637,90 @@ function alupro_get_product_schedule_pdf_url($post_id)
 	);
 }
 
+function alupro_dynamic_contrast_text_color($background)
+{
+	$background = ltrim(alupro_dynamic_normalize_background_color($background), '#');
+
+	if (3 === strlen($background)) {
+		$background = $background[0] . $background[0] . $background[1] . $background[1] . $background[2] . $background[2];
+	}
+
+	if (6 !== strlen($background)) {
+		return '';
+	}
+
+	$r = hexdec(substr($background, 0, 2));
+	$g = hexdec(substr($background, 2, 2));
+	$b = hexdec(substr($background, 4, 2));
+	$luminance = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+
+	return $luminance > 150 ? '#111827' : '#ffffff';
+}
+
+function alupro_dynamic_background_style_attr($background, $include_text_color = false)
+{
+	$background = alupro_dynamic_normalize_background_color($background);
+
+	if ('' === $background) {
+		return '';
+	}
+
+	$style = 'background-color: ' . $background . ';';
+
+	if ($include_text_color) {
+		$text_color = alupro_dynamic_contrast_text_color($background);
+
+		if ('' !== $text_color) {
+			$style .= ' color: ' . $text_color . ';';
+		}
+	}
+
+	return ' style="' . esc_attr($style) . '"';
+}
+
+function alupro_dynamic_table_cell_style_attr($cell_background, $row_background = '', $row_background_visible = false)
+{
+	$cell_background = alupro_dynamic_normalize_background_color($cell_background);
+	$row_background = alupro_dynamic_normalize_background_color($row_background);
+	$style = '';
+
+	if ('' !== $cell_background) {
+		$style .= 'background-color: ' . $cell_background . ';';
+		$text_color = alupro_dynamic_contrast_text_color($cell_background);
+
+		if ('' !== $text_color) {
+			$style .= ' color: ' . $text_color . ';';
+		}
+	} elseif ($row_background_visible && '' !== $row_background) {
+		$text_color = alupro_dynamic_contrast_text_color($row_background);
+
+		if ('' !== $text_color) {
+			$style .= 'color: ' . $text_color . ';';
+		}
+	}
+
+	if ('' === $style) {
+		return '';
+	}
+
+	return ' style="' . esc_attr($style) . '"';
+}
+
 function alupro_render_product_schedule_table($schedule)
 {
 	$headers = isset($schedule['headers']) ? $schedule['headers'] : array();
+	$header_backgrounds = isset($schedule['header_backgrounds']) ? $schedule['header_backgrounds'] : array();
 	$processed_rows = isset($schedule['processed_rows']) ? $schedule['processed_rows'] : array();
 	$column_count = max(1, count($headers));
+	$table_background = isset($schedule['table_background']) ? $schedule['table_background'] : '';
 
 	ob_start();
 	?>
-	<table class="w-full min-w-[560px] text-left">
+	<table class="w-full min-w-[560px] text-left"<?php echo alupro_dynamic_background_style_attr($table_background); ?>>
 		<thead class="bg-[#190E5D] text-white">
 			<tr>
-				<?php foreach ($headers as $header): ?>
-					<th class="px-5 py-3 text-xs font-bold uppercase tracking-[0.16em]">
+				<?php foreach ($headers as $index => $header): ?>
+					<th class="px-5 py-3 text-xs font-bold uppercase tracking-[0.16em]"<?php echo alupro_dynamic_background_style_attr(isset($header_backgrounds[$index]) ? $header_backgrounds[$index] : '', true); ?>>
 						<?php echo esc_html($header); ?>
 					</th>
 				<?php endforeach; ?>
@@ -394,8 +736,11 @@ function alupro_render_product_schedule_table($schedule)
 			<?php else: ?>
 				<?php
 				$is_even_group = false;
+				$render_row_index = 0;
 
 				foreach ($processed_rows as $row):
+					$render_row_index++;
+					$is_even_render_row = 0 === $render_row_index % 2;
 					if (!empty($row['is_first_of_group'])) {
 						$is_even_group = !$is_even_group;
 					}
@@ -404,15 +749,21 @@ function alupro_render_product_schedule_table($schedule)
 					$cells = isset($row['cells']) ? array_values($row['cells']) : array();
 					$cells = array_pad(array_slice($cells, 0, max(0, $column_count - 1)), max(0, $column_count - 1), '');
 					?>
-					<tr class="<?php echo esc_attr($bg_class); ?>">
+					<?php $row_background = isset($row['row_background']) ? $row['row_background'] : ''; ?>
+					<tr class="<?php echo esc_attr($bg_class); ?>"<?php echo alupro_dynamic_background_style_attr($row_background); ?>>
 						<?php if (!empty($row['is_first_of_group'])): ?>
+							<?php $first_cell_background = !empty($row['background']) ? $row['background'] : ''; ?>
 							<td rowspan="<?php echo esc_attr($row['rowspan']); ?>"
-								class="px-5 py-3 align-top text-base font-bold text-[#180f5e] <?php echo esc_attr($bg_class); ?>">
+								class="px-5 py-3 align-top text-base font-bold text-[#180f5e] <?php echo esc_attr($bg_class); ?>"<?php echo alupro_dynamic_table_cell_style_attr($first_cell_background); ?>>
 								<?php echo esc_html($row['value']); ?>
 							</td>
 						<?php endif; ?>
-						<?php foreach ($cells as $cell): ?>
-							<td class="px-5 py-3 text-sm font-normal text-[#4B5563]">
+						<?php foreach ($cells as $cell_index => $cell): ?>
+							<?php
+							$cell_backgrounds = isset($row['cell_backgrounds']) ? $row['cell_backgrounds'] : array();
+							$cell_background = !empty($cell_backgrounds[$cell_index]) ? $cell_backgrounds[$cell_index] : '';
+							?>
+							<td class="px-5 py-3 text-sm font-normal text-[#4B5563]"<?php echo alupro_dynamic_table_cell_style_attr($cell_background, $row_background, !$is_even_render_row); ?>>
 								<?php echo esc_html($cell); ?>
 							</td>
 						<?php endforeach; ?>
@@ -707,6 +1058,27 @@ function alupro_dynamic_pdf_table_rows($schedule)
 	return $rows;
 }
 
+function alupro_dynamic_pdf_table_background_rows($schedule)
+{
+	$rows = array();
+	$column_count = max(1, count($schedule['headers']));
+	$processed_rows = isset($schedule['processed_rows']) ? $schedule['processed_rows'] : array();
+	$active_group_background = '';
+
+	foreach ($processed_rows as $row) {
+		if (!empty($row['is_first_of_group'])) {
+			$active_group_background = !empty($row['background']) ? $row['background'] : '#eaf4ff';
+		}
+
+		$backgrounds = array($active_group_background);
+		$backgrounds = array_merge($backgrounds, isset($row['cell_backgrounds']) ? $row['cell_backgrounds'] : array());
+		$backgrounds = array_pad(array_slice($backgrounds, 0, $column_count), $column_count, '');
+		$rows[] = $backgrounds;
+	}
+
+	return $rows;
+}
+
 function alupro_dynamic_pdf_column_widths($column_count, $table_width)
 {
 	if ($column_count <= 1) {
@@ -767,6 +1139,9 @@ function alupro_dynamic_generate_schedule_pdf($schedule)
 	$pdf = new AluPro_Dynamic_Pdf_Document();
 	$headers = $schedule['headers'];
 	$rows = alupro_dynamic_pdf_table_rows($schedule);
+	$row_backgrounds = alupro_dynamic_pdf_table_background_rows($schedule);
+	$header_backgrounds = isset($schedule['header_backgrounds']) ? $schedule['header_backgrounds'] : array();
+	$body_row_backgrounds = isset($schedule['body_row_backgrounds']) ? $schedule['body_row_backgrounds'] : array();
 	$column_count = max(1, count($headers));
 	$table_x = 50;
 	$table_width = 495;
@@ -776,16 +1151,17 @@ function alupro_dynamic_generate_schedule_pdf($schedule)
 	$widths = alupro_dynamic_pdf_column_widths($column_count, $table_width);
 	$row_index = 0;
 
-	$draw_table_header = function ($y) use ($pdf, $headers, $widths, $table_x, $header_height) {
-		$pdf->rect($table_x, $y, array_sum($widths), $header_height, '#1d1164', '#1d1164');
-
+	$draw_table_header = function ($y) use ($pdf, $headers, $header_backgrounds, $widths, $table_x, $header_height) {
 		$x = $table_x;
 		foreach ($headers as $index => $header) {
+			$header_fill = !empty($header_backgrounds[$index]) ? $header_backgrounds[$index] : '#1d1164';
+			$pdf->rect($x, $y, $widths[$index], $header_height, $header_fill, $header_fill);
+
 			if ($index > 0) {
 				$pdf->line($x, $y, $x, $y + $header_height, '#31246f', 0.6);
 			}
 
-			$pdf->text($x + 10, $y + 14, $header, 9, false, '#ffffff');
+			$pdf->text($x + 10, $y + 14, $header, 9, false, alupro_dynamic_contrast_text_color($header_fill) ?: '#ffffff');
 			$x += $widths[$index];
 		}
 
@@ -829,15 +1205,23 @@ function alupro_dynamic_generate_schedule_pdf($schedule)
 			$y = $start_page(false);
 		}
 
-		$fill = 0 === $row_index % 2 ? '#ffffff' : '#f6f7f9';
+		$cell_backgrounds = isset($row_backgrounds[$row_index]) ? $row_backgrounds[$row_index] : array();
+		$row_background = isset($body_row_backgrounds[$row_index]) ? $body_row_backgrounds[$row_index] : '';
+		$is_even_pdf_row = 0 === (($row_index + 1) % 2);
+		$fill = (!$is_even_pdf_row && '' !== $row_background) ? $row_background : (0 === $row_index % 2 ? '#ffffff' : '#f6f7f9');
 		$pdf->rect($table_x, $y, $table_width, $row_height, $fill, null);
 
 		$x = $table_x;
 		foreach ($cells as $index => $cell) {
 			$cell_width = $widths[$index];
+			$cell_background = !empty($cell_backgrounds[$index]) ? $cell_backgrounds[$index] : '';
+			$custom_background = $cell_background ?: (!$is_even_pdf_row ? $row_background : '');
 
-			if (0 === $index && '' !== trim((string) $cell)) {
+			if ('' !== $cell_background) {
+				$pdf->rect($x, $y, $cell_width, $row_height, $cell_background, null);
+			} elseif (0 === $index && '' !== trim((string) $cell)) {
 				$pdf->rect($x, $y, $cell_width, $row_height, '#eaf4ff', null);
+				$custom_background = '';
 			}
 
 			if ($index > 0) {
@@ -849,7 +1233,7 @@ function alupro_dynamic_generate_schedule_pdf($schedule)
 			} else {
 				$font_size = 9.5;
 				$bold = 0 === $index && '' !== trim((string) $cell);
-				$color = $bold ? '#111827' : '#4b4b4b';
+				$color = '' !== $custom_background ? alupro_dynamic_contrast_text_color($custom_background) : ($bold ? '#111827' : '#4b4b4b');
 				$pdf->text($x + 10, $y + 16, $pdf->fit_text($cell, $cell_width - 20, $font_size, $bold), $font_size, $bold, $color);
 			}
 

@@ -14,7 +14,10 @@ while (have_posts()):
 	$p_tempers = $schedule['tempers'];
 	$p_certifications = $schedule['certifications'];
 	$p_image = $schedule['image'];
-	$p_schedule_pdf = alupro_get_product_schedule_pdf_url($pid);
+	$p_catalog_pdf = $schedule['catalog_pdf'];
+	$use_catalog_pdf = !empty($schedule['use_catalog_pdf']);
+	$p_schedule_pdf = $use_catalog_pdf ? $p_catalog_pdf : alupro_get_product_schedule_pdf_url($pid);
+	$p_catalog_pdf_preview = $p_catalog_pdf . '#view=FitH';
 	?>
 	<main class="flex flex-col flex-1 w-full overflow-hidden">
 		<section class="relative overflow-hidden bg-white px-6 py-16 md:py-24">
@@ -49,21 +52,37 @@ while (have_posts()):
 						<img src="<?php echo esc_url($p_image); ?>" alt="<?php the_title_attribute(); ?>"
 							class="h-28 w-40 shrink-0 self-center rounded-xl object-cover sm:h-32 sm:w-48 sm:self-auto" />
 					</div>
-					<div class="overflow-x-auto">
-						<?php echo alupro_render_product_schedule_table($schedule); ?>
-					</div>
+					<?php if ($use_catalog_pdf): ?>
+						<div class="bg-[#F8FAFC] p-3 sm:p-5">
+							<object data="<?php echo esc_url($p_catalog_pdf_preview); ?>" type="application/pdf"
+								class="block h-[75vh] min-h-[640px] w-full rounded-xl bg-white">
+								<div class="rounded-xl bg-white px-6 py-8 text-center text-sm text-[#4B5563]">
+									PDF preview is not available in this browser.
+									<a href="<?php echo esc_url($p_catalog_pdf); ?>" class="font-bold text-[#190E5D] underline">
+										Open PDF
+									</a>
+								</div>
+							</object>
+						</div>
+					<?php else: ?>
+						<div class="overflow-x-auto">
+							<?php echo alupro_render_product_schedule_table($schedule); ?>
+						</div>
+					<?php endif; ?>
 				</div>
 
-				<div class="mt-8 rounded-2xl border border-[#190E5D]/10 bg-[#F8FAFC] px-7 py-6">
-					<h3 class="text-base font-extrabold uppercase tracking-widest text-[#111827]">
-						Custom & Indent Items
-					</h3>
-					<p class="mt-3 text-sm leading-7 text-[#4B5563]">
-						Dimensions not listed above and items marked Indent are
-						available via mill / works production on a made-to-order
-						basis. Subject to minimum order quantities (MOQ).
-					</p>
-				</div>
+				<?php if (!$use_catalog_pdf): ?>
+					<div class="mt-8 rounded-2xl border border-[#190E5D]/10 bg-[#F8FAFC] px-7 py-6">
+						<h3 class="text-base font-extrabold uppercase tracking-widest text-[#111827]">
+							Custom & Indent Items
+						</h3>
+						<p class="mt-3 text-sm leading-7 text-[#4B5563]">
+							Dimensions not listed above and items marked Indent are
+							available via mill / works production on a made-to-order
+							basis. Subject to minimum order quantities (MOQ).
+						</p>
+					</div>
+				<?php endif; ?>
 			</div>
 		</section>
 	</main>
