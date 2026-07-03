@@ -68,9 +68,9 @@ function alupro_dynamic_enqueue_assets()
 
 	wp_enqueue_style(
 		'alupro-font-awesome',
-		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css',
+		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css',
 		array(),
-		'6.0.0-beta3'
+		'6.5.2'
 	);
 
 	wp_enqueue_script(
@@ -258,40 +258,6 @@ function alupro_dynamic_product_category_anchor_url($term)
 }
 
 /**
- * Product category items that currently render as homepage sections.
- */
-function alupro_dynamic_product_category_nav_items()
-{
-	if (!taxonomy_exists('product_category')) {
-		return array();
-	}
-
-	$terms = get_terms(
-		array(
-			'taxonomy' => 'product_category',
-			'hide_empty' => true,
-			'orderby' => 'term_order',
-			'order' => 'ASC',
-		)
-	);
-
-	if (empty($terms) || is_wp_error($terms)) {
-		return array();
-	}
-
-	$items = array();
-	foreach ($terms as $term) {
-		$items[] = array(
-			'label' => $term->name,
-			'url' => alupro_dynamic_product_category_anchor_url($term),
-			'term' => $term,
-		);
-	}
-
-	return $items;
-}
-
-/**
  * Treat selected menu items as homepage section links even when an admin menu is assigned.
  */
 function alupro_dynamic_menu_item_points_to_custom_services($item)
@@ -304,7 +270,48 @@ function alupro_dynamic_menu_item_points_to_custom_services($item)
 }
 
 /**
- * Inject dynamic product category children under the Products menu item.
+ * Keep manually added product category menu items pointing at homepage sections.
+ */
+function alupro_dynamic_menu_item_product_category_anchor($item)
+{
+	if (isset($item->object, $item->object_id) && 'product_category' === $item->object) {
+		$term = get_term((int) $item->object_id, 'product_category');
+		if ($term && !is_wp_error($term)) {
+			return alupro_dynamic_product_category_anchor_url($term);
+		}
+	}
+
+	$url = isset($item->url) ? (string) $item->url : '';
+	$path = trim((string) wp_parse_url($url, PHP_URL_PATH), '/');
+	if (0 === strpos($path, 'product-category/')) {
+		$slug = basename($path);
+		$term = get_term_by('slug', $slug, 'product_category');
+		if ($term && !is_wp_error($term)) {
+			return alupro_dynamic_product_category_anchor_url($term);
+		}
+	}
+
+	$aliases = array(
+		'marine-grade-aluminium' => 'marine-grade',
+		'structural-grade-aluminium' => 'structural-grade',
+		'aerospace-grade-aluminium' => 'aerospace-grade',
+		'extrusions-profiles-aluminium' => 'extrusions-profiles',
+		'specialty-range-aluminium' => 'specialty-grade',
+	);
+	$title_slug = isset($item->title) ? sanitize_title($item->title) : '';
+	$path_slug = basename($path);
+
+	foreach (array($title_slug, $path_slug) as $candidate) {
+		if (isset($aliases[$candidate])) {
+			return alupro_dynamic_product_category_anchor_url($aliases[$candidate]);
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Normalize URLs for manually managed menu items.
  */
 function alupro_dynamic_filter_nav_menu_objects($items, $args)
 {
@@ -312,89 +319,14 @@ function alupro_dynamic_filter_nav_menu_objects($items, $args)
 		if (alupro_dynamic_menu_item_points_to_custom_services($item)) {
 			$item->url = alupro_dynamic_custom_services_anchor_url();
 		}
-	}
 
-	if (empty($args->theme_location) || 'primary' !== $args->theme_location) {
-		return $items;
-	}
-
-	$products_item = null;
-	foreach ($items as $item) {
-		$title = isset($item->title) ? sanitize_title($item->title) : '';
-		$is_top_level = empty($item->menu_item_parent) || '0' === (string) $item->menu_item_parent;
-
-		if ($is_top_level && in_array($title, array('products', 'product'), true)) {
-			$products_item = $item;
-			break;
+		$product_category_url = alupro_dynamic_menu_item_product_category_anchor($item);
+		if ($product_category_url) {
+			$item->url = $product_category_url;
 		}
 	}
 
-	if (!$products_item) {
-		return $items;
-	}
-
-	$product_items = alupro_dynamic_product_category_nav_items();
-	if (empty($product_items)) {
-		return $items;
-	}
-
-	$product_parent_id = (string) $products_item->db_id;
-	$remove_ids = array();
-
-	foreach ($items as $item) {
-		if ((string) $item->menu_item_parent === $product_parent_id) {
-			$remove_ids[] = (string) $item->db_id;
-		}
-	}
-
-	$changed = true;
-	while ($changed) {
-		$changed = false;
-		foreach ($items as $item) {
-			if (in_array((string) $item->menu_item_parent, $remove_ids, true) && !in_array((string) $item->db_id, $remove_ids, true)) {
-				$remove_ids[] = (string) $item->db_id;
-				$changed = true;
-			}
-		}
-	}
-
-	$filtered_items = array();
-	foreach ($items as $item) {
-		if (!in_array((string) $item->db_id, $remove_ids, true)) {
-			$filtered_items[] = $item;
-		}
-	}
-
-	if (!is_array($products_item->classes)) {
-		$products_item->classes = array();
-	}
-	if (!in_array('menu-item-has-children', $products_item->classes, true)) {
-		$products_item->classes[] = 'menu-item-has-children';
-	}
-
-	$synthetic_id = -1000;
-	foreach ($product_items as $product_item) {
-		$menu_item = new stdClass();
-		$menu_item->ID = $synthetic_id;
-		$menu_item->db_id = $synthetic_id;
-		$menu_item->menu_item_parent = $product_parent_id;
-		$menu_item->menu_order = 0;
-		$menu_item->object_id = isset($product_item['term']->term_id) ? (int) $product_item['term']->term_id : 0;
-		$menu_item->object = 'product_category';
-		$menu_item->type = 'taxonomy';
-		$menu_item->type_label = __('Product Category', 'alupro-dynamic');
-		$menu_item->title = $product_item['label'];
-		$menu_item->url = $product_item['url'];
-		$menu_item->target = '';
-		$menu_item->attr_title = '';
-		$menu_item->description = '';
-		$menu_item->xfn = '';
-		$menu_item->classes = array('menu-item', 'menu-item-type-taxonomy', 'menu-item-object-product_category');
-		$filtered_items[] = $menu_item;
-		$synthetic_id--;
-	}
-
-	return $filtered_items;
+	return $items;
 }
 add_filter('wp_nav_menu_objects', 'alupro_dynamic_filter_nav_menu_objects', 20, 2);
 
@@ -638,7 +570,6 @@ function alupro_dynamic_footer_menu($theme_location, $fallback_items = array(), 
  */
 function alupro_dynamic_static_desktop_menu()
 {
-	$product_items = alupro_dynamic_product_category_nav_items();
 	?>
 	<a href="<?php echo esc_url(home_url('/')); ?>" class="nav-link text-white/70 hover:text-[#00a2e0]">Home</a>
 	<a href="<?php echo esc_url(home_url('/about-us/')); ?>" class="nav-link text-white/70 hover:text-[#00a2e0]">About
@@ -651,10 +582,19 @@ function alupro_dynamic_static_desktop_menu()
 		</button>
 		<div
 			class="dropdown absolute left-0 top-full w-66 bg-white rounded-xl shadow-xl pt-3 pb-2 border border-[#190E5D]/10 z-50">
-			<?php foreach ($product_items as $product_item) : ?>
-				<a href="<?php echo esc_url($product_item['url']); ?>"
-					class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]"><?php echo esc_html($product_item['label']); ?></a>
-			<?php endforeach; ?>
+			<a href="<?php echo esc_url(home_url('/#sheets-plates-aluminium')); ?>"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Marine Grade Aluminium</a>
+			<a href="<?php echo esc_url(home_url('/#structural-grade-aluminium')); ?>"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Structural Grade
+				Aluminium</a>
+			<a href="<?php echo esc_url(home_url('/#aerospace-grade-aluminium')); ?>"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Aerospace Grade Aluminium</a>
+			<a href="<?php echo esc_url(home_url('/#extrusions-profiles-aluminium')); ?>"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Extrusions &amp; Profiles
+				Aluminium </a>
+			<a href="<?php echo esc_url(home_url('/#specialty-range-aluminium')); ?>"
+				class="block px-6 py-3 text-[#111827] hover:bg-[#e6f6fc] hover:text-[#00a2e0]">Specialty Range Aluminium
+			</a>
 		</div>
 	</div>
 	<a href="<?php echo esc_url(alupro_dynamic_custom_services_anchor_url()); ?>" class="nav-link text-white/70 hover:text-[#00a2e0]">Custom Services</a>
@@ -671,7 +611,6 @@ function alupro_dynamic_static_desktop_menu()
  */
 function alupro_dynamic_static_mobile_menu()
 {
-	$product_items = alupro_dynamic_product_category_nav_items();
 	?>
 	<a href="<?php echo esc_url(home_url('/')); ?>" class="font-semibold text-[#111827]">Home</a>
 	<a href="<?php echo esc_url(home_url('/about-us/')); ?>" class="font-semibold text-[#111827]">About Us</a>
@@ -682,9 +621,12 @@ function alupro_dynamic_static_mobile_menu()
 			<i class="fas fa-chevron-down text-[#111827] transition-transform"></i>
 		</button>
 		<div class="mobile-dropdown hidden mt-4 ml-4">
-			<?php foreach ($product_items as $product_item) : ?>
-				<a href="<?php echo esc_url($product_item['url']); ?>" class="block py-2 text-[#111827]"><?php echo esc_html($product_item['label']); ?></a>
-			<?php endforeach; ?>
+			<a href="<?php echo esc_url(home_url('/#sheets-plates-aluminium')); ?>" class="block py-2 text-[#111827]">Marine Grade Aluminium</a>
+			<a href="<?php echo esc_url(home_url('/#structural-grade-aluminium')); ?>" class="block py-2 text-[#111827]">Structural Grade Aluminium</a>
+			<a href="<?php echo esc_url(home_url('/#aerospace-grade-aluminium')); ?>" class="block py-2 text-[#111827]">Aerospace Grade Aluminium</a>
+			<a href="<?php echo esc_url(home_url('/#extrusions-profiles-aluminium')); ?>" class="block py-2 text-[#111827]">Extrusions &amp; Profiles
+				Aluminium</a>
+			<a href="<?php echo esc_url(home_url('/#specialty-range-aluminium')); ?>" class="block py-2 text-[#111827]">Specialty Range Aluminium</a>
 		</div>
 	</div>
 	<a href="<?php echo esc_url(alupro_dynamic_custom_services_anchor_url()); ?>" class="font-semibold text-[#111827]">Custom Services</a>

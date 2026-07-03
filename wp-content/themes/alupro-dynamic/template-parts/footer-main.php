@@ -14,7 +14,13 @@ $footer_1_fallback = array(
 	array('label' => __('Contact', 'alupro-dynamic'), 'url' => home_url('/contact/')),
 );
 
-$footer_2_fallback = function_exists('alupro_dynamic_product_category_nav_items') ? alupro_dynamic_product_category_nav_items() : array();
+$footer_2_fallback = array(
+	array('label' => __('Marine Grade Aluminium', 'alupro-dynamic'), 'url' => home_url('/#sheets-plates-aluminium')),
+	array('label' => __('Structural Grade Aluminium', 'alupro-dynamic'), 'url' => home_url('/#structural-grade-aluminium')),
+	array('label' => __('Aerospace Grade Aluminium', 'alupro-dynamic'), 'url' => home_url('/#aerospace-grade-aluminium')),
+	array('label' => __('Extrusions & Profiles Aluminium', 'alupro-dynamic'), 'url' => home_url('/#extrusions-profiles-aluminium')),
+	array('label' => __('Specialty Range Aluminium', 'alupro-dynamic'), 'url' => home_url('/#specialty-range-aluminium')),
+);
 
 $footer_3_fallback = array(
 	array('label' => __('Custom Services', 'alupro-dynamic'), 'url' => function_exists('alupro_dynamic_custom_services_anchor_url') ? alupro_dynamic_custom_services_anchor_url() : home_url('/#custom-services')),
