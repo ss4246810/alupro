@@ -202,36 +202,49 @@ function setupProductCarousel(carouselId, prevId, nextId, slideSelector) {
   updateControls();
 }
 
-setupProductCarousel(
-  "materials-carousel",
-  "materials-prev",
-  "materials-next",
-  ".materials-slide",
-);
-setupProductCarousel(
-  "specialty-carousel",
-  "specialty-prev",
-  "specialty-next",
-  ".specialty-slide",
-);
-setupProductCarousel(
-  "structural-carousel",
-  "structural-prev",
-  "structural-next",
-  ".structural-slide",
-);
-setupProductCarousel(
-  "aerospace-carousel",
-  "aerospace-prev",
-  "aerospace-next",
-  ".aerospace-slide",
-);
-setupProductCarousel(
-  "extrusions-carousel",
-  "extrusions-prev",
-  "extrusions-next",
-  ".extrusions-slide",
-);
+const dynamicProductCarousels = document.querySelectorAll("[data-product-carousel]");
+
+if (dynamicProductCarousels.length) {
+  dynamicProductCarousels.forEach((carousel) => {
+    setupProductCarousel(
+      carousel.id,
+      carousel.dataset.prevId,
+      carousel.dataset.nextId,
+      carousel.dataset.slideSelector || ".product-slide",
+    );
+  });
+} else {
+  setupProductCarousel(
+    "materials-carousel",
+    "materials-prev",
+    "materials-next",
+    ".materials-slide",
+  );
+  setupProductCarousel(
+    "specialty-carousel",
+    "specialty-prev",
+    "specialty-next",
+    ".specialty-slide",
+  );
+  setupProductCarousel(
+    "structural-carousel",
+    "structural-prev",
+    "structural-next",
+    ".structural-slide",
+  );
+  setupProductCarousel(
+    "aerospace-carousel",
+    "aerospace-prev",
+    "aerospace-next",
+    ".aerospace-slide",
+  );
+  setupProductCarousel(
+    "extrusions-carousel",
+    "extrusions-prev",
+    "extrusions-next",
+    ".extrusions-slide",
+  );
+}
 //// Product Carousels Ends
 
 

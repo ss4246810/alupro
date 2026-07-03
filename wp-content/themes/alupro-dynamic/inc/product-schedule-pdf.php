@@ -442,6 +442,15 @@ function alupro_dynamic_extract_editor_schedule_table($content)
 	);
 }
 
+/**
+ * Resolve a PDF URL from an ACF file field value.
+ *
+ * ACF can return a file field as an attachment ID, a URL string, or an array
+ * containing ID/id and url keys, so this accepts those shapes deliberately.
+ *
+ * @param array{id?: int|string, ID?: int|string, url?: string}|int|string|null $file ACF file field value.
+ * @return string Sanitized PDF URL, or empty string when the value is not a PDF.
+ */
 function alupro_dynamic_get_pdf_url_from_file_field($file)
 {
 	$url = '';
@@ -502,6 +511,13 @@ function alupro_dynamic_get_pdf_url_from_file_field($file)
 	return '';
 }
 
+/**
+ * Check whether a URL or attachment points to a PDF file.
+ *
+ * @param string $url URL to inspect.
+ * @param int    $attachment_id Optional attachment ID for MIME checking.
+ * @return bool True when the URL/attachment is a PDF.
+ */
 function alupro_dynamic_is_pdf_url($url, $attachment_id = 0)
 {
 	if ($attachment_id && 'application/pdf' === get_post_mime_type($attachment_id)) {

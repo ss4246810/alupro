@@ -193,7 +193,8 @@ body {
 }
 
 .materials-carousel,
-.specialty-carousel {
+.specialty-carousel,
+.product-carousel {
   overflow-y: visible;
   scroll-padding-left: 0;
   scroll-padding-right: 0;
@@ -205,12 +206,14 @@ body {
 .structural-carousel::-webkit-scrollbar,
 .aerospace-carousel::-webkit-scrollbar,
 .extrusions-carousel::-webkit-scrollbar,
-.specialty-carousel::-webkit-scrollbar {
+.specialty-carousel::-webkit-scrollbar,
+.product-carousel::-webkit-scrollbar {
   display: none;
 }
 
 .materials-slide,
-.specialty-slide {
+.specialty-slide,
+.product-slide {
   flex: 0 0 100%;
   scroll-snap-align: start;
 }
@@ -248,7 +251,8 @@ body {
   .structural-slide,
   .aerospace-slide,
   .extrusions-slide,
-  .specialty-slide {
+  .specialty-slide,
+  .product-slide {
     flex-basis: calc((100% - 24px) / 2);
   }
 }
@@ -258,7 +262,8 @@ body {
   .structural-slide,
   .aerospace-slide,
   .extrusions-slide,
-  .specialty-slide {
+  .specialty-slide,
+  .product-slide {
     flex-basis: calc((100% - 48px) / 3);
   }
 }
@@ -267,7 +272,8 @@ body {
   .materials-slide,
   .structural-slide,
   .extrusions-slide,
-  .specialty-slide {
+  .specialty-slide,
+  .product-slide {
     flex-basis: calc((100% - 72px) / 4);
   }
 

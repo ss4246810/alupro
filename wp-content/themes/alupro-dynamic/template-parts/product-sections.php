@@ -215,6 +215,8 @@ $slide_defaults = array(
 $categories = get_terms(array(
 	'taxonomy'   => 'product_category',
 	'hide_empty' => false,
+	'orderby' => 'term_order',
+	'order' => 'ASC',
 ));
 
 // Loop through each category to output its section
@@ -245,8 +247,34 @@ if (!empty($categories) && !is_wp_error($categories)) :
 	}
 
 	$term_id = 'product_category_' . $term->term_id;
-	$defaults = $cat_defaults[$slug];
-	$mapping = $carousel_mappings[$slug];
+	$defaults = isset($cat_defaults[$slug]) ? $cat_defaults[$slug] : array(
+		'badge_text' => 'Product Range',
+		'badge_icon' => 'fa-solid fa-layer-group',
+		'title' => $term->name,
+		'description' => $term->description ? $term->description : sprintf(__('Explore our %s aluminium product range.', 'alupro-dynamic'), $term->name),
+		'features_title' => 'Key Features',
+		'features_icon' => 'fa-solid fa-star',
+		'features' => array(),
+		'ideal_title' => 'Ideal For',
+		'ideal_icon' => 'fa-solid fa-bullseye',
+		'ideal' => array(),
+		'carousel_icon' => 'fa-solid fa-layer-group',
+		'carousel_subtitle' => $term->name,
+		'carousel_title' => $term->name,
+	);
+
+	if (isset($carousel_mappings[$slug])) {
+		$mapping = $carousel_mappings[$slug];
+	} else {
+		$anchor_id = function_exists('alupro_dynamic_product_category_anchor_id') ? alupro_dynamic_product_category_anchor_id($term) : 'product-category-' . sanitize_title($slug);
+		$mapping = array(
+			'id' => $anchor_id,
+			'carousel_id' => 'product-carousel-' . sanitize_title($slug),
+			'prev_id' => 'product-prev-' . sanitize_title($slug),
+			'next_id' => 'product-next-' . sanitize_title($slug),
+			'slide_class' => 'product-slide-' . sanitize_title($slug),
+		);
+	}
 
 	// Retrieve ACF field values with static defaults as fallbacks
 	$badge_text = function_exists('get_field') ? get_field('cat_badge_text', $term_id) : '';
@@ -352,7 +380,7 @@ if (!empty($categories) && !is_wp_error($categories)) :
 		wp_reset_postdata();
 	} else {
 		// Fallback to default slides
-		foreach ($slide_defaults[$slug] as $def_slide) {
+		foreach (isset($slide_defaults[$slug]) ? $slide_defaults[$slug] : array() as $def_slide) {
 			$slides[] = array(
 				'title'  => $def_slide['title'],
 				'desc'   => $def_slide['desc'],
@@ -461,11 +489,18 @@ if (!empty($categories) && !is_wp_error($categories)) :
 				</div>
 			</div>
 
-			<div id="<?php echo esc_attr($mapping['carousel_id']); ?>" class="<?php echo esc_attr($mapping['carousel_id']); ?> mt-6 flex gap-6 overflow-x-auto scroll-smooth py-8">
+			<div
+				id="<?php echo esc_attr($mapping['carousel_id']); ?>"
+				class="<?php echo esc_attr($mapping['carousel_id']); ?> product-carousel mt-6 flex gap-6 overflow-x-auto scroll-smooth py-8"
+				data-product-carousel
+				data-prev-id="<?php echo esc_attr($mapping['prev_id']); ?>"
+				data-next-id="<?php echo esc_attr($mapping['next_id']); ?>"
+				data-slide-selector=".product-slide"
+			>
 				<?php foreach ($slides as $slide) :
 					$status_class = (trim($slide['status']) === 'In Stock') ? 'bg-[#047857] text-white' : 'bg-[#F4C026] text-[#190E5D]';
 					?>
-					<a href="<?php echo esc_url($slide['link']); ?>" class="<?php echo esc_attr($mapping['slide_class']); ?> group overflow-hidden rounded-2xl border border-[#190E5D]/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#00a2e0]/35 hover:shadow-xl hover:shadow-[#190E5D]/10">
+					<a href="<?php echo esc_url($slide['link']); ?>" class="<?php echo esc_attr($mapping['slide_class']); ?> product-slide group overflow-hidden rounded-2xl border border-[#190E5D]/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#00a2e0]/35 hover:shadow-xl hover:shadow-[#190E5D]/10">
 						<div class="relative h-44 overflow-hidden bg-[#190E5D]">
 							<?php if ($slide['image']) : ?>
 								<img src="<?php echo esc_url($slide['image']); ?>" alt="<?php echo esc_attr($slide['title']); ?>" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
