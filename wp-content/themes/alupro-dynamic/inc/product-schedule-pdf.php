@@ -799,6 +799,8 @@ if (!class_exists('AluPro_Dynamic_Pdf_Document')) {
 		private $height = 841.68;
 		private $pages = array();
 		private $content = '';
+		private $images = array();
+		private $image_lookup = array();
 
 		public function add_page()
 		{
@@ -874,6 +876,42 @@ if (!class_exists('AluPro_Dynamic_Pdf_Document')) {
 			$this->content .= 'q ' . $this->format_number($line_width) . ' w ' . $this->color_command($color, true) . ' ' . $this->format_number($x1) . ' ' . $this->format_number($this->height - $y1) . ' m ' . $this->format_number($x2) . ' ' . $this->format_number($this->height - $y2) . ' l S Q' . "\n";
 		}
 
+		public function image($source, $x, $y, $w, $h, $fit = 'contain')
+		{
+			$image = $this->prepare_image($source);
+
+			if (empty($image)) {
+				return false;
+			}
+
+			$key = sha1($image['data']);
+
+			if (!isset($this->image_lookup[$key])) {
+				$name = 'I' . (count($this->images) + 1);
+				$this->images[$name] = $image;
+				$this->image_lookup[$key] = $name;
+			}
+
+			$name = $this->image_lookup[$key];
+			$draw_x = $x;
+			$draw_y = $y;
+			$draw_w = $w;
+			$draw_h = $h;
+
+			if ('cover' !== $fit && $image['width'] > 0 && $image['height'] > 0) {
+				$ratio = min($w / $image['width'], $h / $image['height']);
+				$draw_w = $image['width'] * $ratio;
+				$draw_h = $image['height'] * $ratio;
+				$draw_x = $x + (($w - $draw_w) / 2);
+				$draw_y = $y + (($h - $draw_h) / 2);
+			}
+
+			$bottom = $this->height - $draw_y - $draw_h;
+			$this->content .= 'q ' . $this->format_number($draw_w) . ' 0 0 ' . $this->format_number($draw_h) . ' ' . $this->format_number($draw_x) . ' ' . $this->format_number($bottom) . ' cm /' . $name . ' Do Q' . "\n";
+
+			return true;
+		}
+
 		public function text($x, $y, $text, $size = 10, $bold = false, $color = '#111827', $align = 'left')
 		{
 			$text = $this->clean_text($text);
@@ -935,13 +973,35 @@ if (!class_exists('AluPro_Dynamic_Pdf_Document')) {
 			);
 			$page_object_numbers = array();
 			$object_number = 5;
+			$image_object_numbers = array();
+
+			foreach ($this->images as $name => $image) {
+				$image_object_numbers[$name] = $object_number++;
+			}
 
 			foreach ($this->pages as $content) {
 				$content_object = $object_number++;
 				$page_object = $object_number++;
 				$objects[$content_object] = '<< /Length ' . strlen($content) . " >>\nstream\n" . $content . "endstream";
-				$objects[$page_object] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' . $this->format_number($this->width) . ' ' . $this->format_number($this->height) . '] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ' . $content_object . ' 0 R >>';
+				$xobjects = '';
+
+				if (!empty($image_object_numbers)) {
+					$xobjects .= ' /XObject <<';
+
+					foreach ($image_object_numbers as $name => $image_object) {
+						$xobjects .= ' /' . $name . ' ' . $image_object . ' 0 R';
+					}
+
+					$xobjects .= ' >>';
+				}
+
+				$objects[$page_object] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' . $this->format_number($this->width) . ' ' . $this->format_number($this->height) . '] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>' . $xobjects . ' >> /Contents ' . $content_object . ' 0 R >>';
 				$page_object_numbers[] = $page_object . ' 0 R';
+			}
+
+			foreach ($this->images as $name => $image) {
+				$image_object = $image_object_numbers[$name];
+				$objects[$image_object] = '<< /Type /XObject /Subtype /Image /Width ' . (int) $image['width'] . ' /Height ' . (int) $image['height'] . ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' . strlen($image['data']) . " >>\nstream\n" . $image['data'] . "\nendstream";
 			}
 
 			$objects[2] = '<< /Type /Pages /Kids [' . implode(' ', $page_object_numbers) . '] /Count ' . count($page_object_numbers) . ' >>';
@@ -967,6 +1027,99 @@ if (!class_exists('AluPro_Dynamic_Pdf_Document')) {
 			$pdf .= "trailer\n<< /Size " . $count . " /Root 1 0 R >>\nstartxref\n" . $xref_offset . "\n%%EOF";
 
 			return $pdf;
+		}
+
+		private function prepare_image($source)
+		{
+			$bytes = $this->read_image_bytes($source);
+
+			if (empty($bytes) || !function_exists('imagecreatefromstring')) {
+				return array();
+			}
+
+			$source_image = @imagecreatefromstring($bytes);
+
+			if (!$source_image) {
+				return array();
+			}
+
+			$width = imagesx($source_image);
+			$height = imagesy($source_image);
+
+			if ($width < 1 || $height < 1) {
+				imagedestroy($source_image);
+				return array();
+			}
+
+			$canvas = imagecreatetruecolor($width, $height);
+			$white = imagecolorallocate($canvas, 255, 255, 255);
+			imagefilledrectangle($canvas, 0, 0, $width, $height, $white);
+			imagecopy($canvas, $source_image, 0, 0, 0, 0, $width, $height);
+
+			ob_start();
+			imagejpeg($canvas, null, 90);
+			$jpeg = ob_get_clean();
+
+			imagedestroy($source_image);
+			imagedestroy($canvas);
+
+			if (empty($jpeg)) {
+				return array();
+			}
+
+			return array(
+				'data' => $jpeg,
+				'width' => $width,
+				'height' => $height,
+			);
+		}
+
+		private function read_image_bytes($source)
+		{
+			$source = trim((string) $source);
+
+			if ('' === $source) {
+				return '';
+			}
+
+			if (0 === strpos($source, 'data:image/')) {
+				$comma = strpos($source, ',');
+
+				if (false !== $comma) {
+					$data = substr($source, $comma + 1);
+					$decoded = base64_decode($data, true);
+
+					return false !== $decoded ? $decoded : '';
+				}
+			}
+
+			if (preg_match('#^https?://#i', $source)) {
+				$local_path = alupro_dynamic_pdf_image_url_to_path($source);
+
+				if ($local_path && is_readable($local_path)) {
+					return (string) file_get_contents($local_path);
+				}
+
+				$response = wp_remote_get(
+					$source,
+					array(
+						'timeout' => 8,
+						'redirection' => 3,
+					)
+				);
+
+				if (!is_wp_error($response) && 200 === (int) wp_remote_retrieve_response_code($response)) {
+					return (string) wp_remote_retrieve_body($response);
+				}
+
+				return '';
+			}
+
+			if (is_readable($source)) {
+				return (string) file_get_contents($source);
+			}
+
+			return '';
 		}
 
 		private function wrap_lines($text, $max_width, $size, $bold)
@@ -1150,6 +1303,48 @@ function alupro_dynamic_pdf_draw_badge($pdf, $x, $y, $w, $value)
 	$pdf->text($badge_x + ($badge_width / 2), $y + 15, $label, 8.5, false, $text, 'center');
 }
 
+function alupro_dynamic_pdf_image_url_to_path($url)
+{
+	$url = trim((string) $url);
+
+	if ('' === $url) {
+		return '';
+	}
+
+	$uploads = wp_get_upload_dir();
+	$maps = array(
+		array('url' => isset($uploads['baseurl']) ? $uploads['baseurl'] : '', 'path' => isset($uploads['basedir']) ? $uploads['basedir'] : ''),
+		array('url' => content_url(), 'path' => WP_CONTENT_DIR),
+		array('url' => get_theme_file_uri(), 'path' => get_theme_file_path()),
+		array('url' => site_url('/'), 'path' => ABSPATH),
+	);
+
+	foreach ($maps as $map) {
+		$base_url = untrailingslashit((string) $map['url']);
+		$base_path = untrailingslashit((string) $map['path']);
+
+		if ('' === $base_url || '' === $base_path || 0 !== strpos($url, $base_url)) {
+			continue;
+		}
+
+		$relative = ltrim(substr($url, strlen($base_url)), '/');
+		$path = $base_path . '/' . rawurldecode($relative);
+
+		if (is_readable($path)) {
+			return $path;
+		}
+	}
+
+	return '';
+}
+
+function alupro_dynamic_pdf_logo_source()
+{
+	$logo = dirname(__DIR__) . '/images/logo-colored-pdf.png';
+
+	return is_readable($logo) ? $logo : '';
+}
+
 function alupro_dynamic_generate_schedule_pdf($schedule)
 {
 	$pdf = new AluPro_Dynamic_Pdf_Document();
@@ -1172,12 +1367,7 @@ function alupro_dynamic_generate_schedule_pdf($schedule)
 		foreach ($headers as $index => $header) {
 			$header_fill = !empty($header_backgrounds[$index]) ? $header_backgrounds[$index] : '#1d1164';
 			$pdf->rect($x, $y, $widths[$index], $header_height, $header_fill, $header_fill);
-
-			if ($index > 0) {
-				$pdf->line($x, $y, $x, $y + $header_height, '#31246f', 0.6);
-			}
-
-			$pdf->text($x + 10, $y + 14, $header, 9, false, alupro_dynamic_contrast_text_color($header_fill) ?: '#ffffff');
+			$pdf->text($x + 10, $y + 14, $header, 9, true, alupro_dynamic_contrast_text_color($header_fill) ?: '#ffffff');
 			$x += $widths[$index];
 		}
 
@@ -1189,12 +1379,21 @@ function alupro_dynamic_generate_schedule_pdf($schedule)
 		$pdf->rect(8, 0, 2, $pdf->page_height(), '#246bff', '#246bff');
 
 		if ($first_page) {
-			$pdf->text(50, 81, 'AluPro', 30, true, '#180f5e');
-			$title_height = $pdf->wrapped_text(160, 58, $schedule['title'], 385, 19, false, '#111111', 21, 2);
+			$logo_source = alupro_dynamic_pdf_logo_source();
+
+			if (!$logo_source || !$pdf->image($logo_source, 42, 48, 105, 68)) {
+				$pdf->text(50, 81, 'AluPro', 30, true, '#180f5e');
+			}
+
+			if (!empty($schedule['image'])) {
+				$pdf->image($schedule['image'], 455, 54, 90, 64);
+			}
+
+			$title_height = $pdf->wrapped_text(160, 58, $schedule['title'], 285, 19, false, '#111111', 21, 2);
 			$meta_y = 58 + max(21, $title_height) + 5;
-			$pdf->text(160, $meta_y, 'Tempers: ' . $schedule['tempers'], 10.5, false, '#4b4b4b');
+			$pdf->text(160, $meta_y, $pdf->fit_text('Tempers: ' . $schedule['tempers'], 285, 10.5, false), 10.5, false, '#4b4b4b');
 			$cert_y = $meta_y + 17;
-			$cert_height = $pdf->wrapped_text(160, $cert_y, $schedule['certifications'], 385, 10.5, false, '#4b4b4b', 13, 2);
+			$cert_height = $pdf->wrapped_text(160, $cert_y, $schedule['certifications'], 285, 10.5, false, '#4b4b4b', 13, 2);
 			$line_y = max(120, $cert_y + $cert_height + 8);
 			$pdf->line(50, $line_y, 545, $line_y, '#d9dce1', 0.6);
 

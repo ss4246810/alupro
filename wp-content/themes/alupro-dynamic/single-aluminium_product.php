@@ -50,7 +50,7 @@ while (have_posts()):
 							</div>
 						</div>
 						<img src="<?php echo esc_url($p_image); ?>" alt="<?php the_title_attribute(); ?>"
-							class="h-28 w-40 shrink-0 self-center rounded-xl object-cover sm:h-32 sm:w-48 sm:self-auto" />
+							class="h-28 w-40 shrink-0 self-center object-contain sm:h-32 sm:w-48 sm:self-auto" />
 					</div>
 					<?php if ($use_catalog_pdf): ?>
 						<div class="bg-[#F8FAFC] p-3 sm:p-5">

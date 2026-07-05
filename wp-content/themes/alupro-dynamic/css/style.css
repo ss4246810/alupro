@@ -288,10 +288,11 @@ body {
   min-width: 560px;
   text-align: left;
   border-collapse: collapse;
-  margin: 20px 0;
-  border: 1px solid rgba(25, 14, 93, 0.1);
-  border-radius: 12px;
-  overflow: hidden;
+  border-spacing: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
 }
 
 .html-to-pdf table thead {
