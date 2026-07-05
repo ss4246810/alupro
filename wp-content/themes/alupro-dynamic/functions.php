@@ -1602,6 +1602,68 @@ function alupro_dynamic_precreate_categories()
 add_action('init', 'alupro_dynamic_precreate_categories', 15);
 
 /**
+ * Add a product category filter to the Aluminium Products admin list.
+ */
+function alupro_dynamic_product_category_admin_filter($post_type)
+{
+	if ('aluminium_product' !== $post_type || !taxonomy_exists('product_category')) {
+		return;
+	}
+
+	$selected = '';
+	if (isset($_GET['product_category_filter'])) {
+		$selected = sanitize_text_field(wp_unslash($_GET['product_category_filter']));
+	}
+
+	wp_dropdown_categories(array(
+		'show_option_all' => __('All Product Categories', 'alupro-dynamic'),
+		'taxonomy'        => 'product_category',
+		'name'            => 'product_category_filter',
+		'orderby'         => 'name',
+		'selected'        => $selected,
+		'hierarchical'    => true,
+		'depth'           => 0,
+		'hide_empty'      => false,
+		'value_field'     => 'slug',
+	));
+}
+add_action('restrict_manage_posts', 'alupro_dynamic_product_category_admin_filter');
+
+/**
+ * Apply the selected product category filter on the admin products query.
+ */
+function alupro_dynamic_filter_products_admin_by_category($query)
+{
+	global $pagenow;
+
+	if (!is_admin() || 'edit.php' !== $pagenow || !$query->is_main_query()) {
+		return;
+	}
+
+	if ('aluminium_product' !== $query->get('post_type')) {
+		return;
+	}
+
+	if (empty($_GET['product_category_filter'])) {
+		return;
+	}
+
+	$category_slug = sanitize_text_field(wp_unslash($_GET['product_category_filter']));
+	if ('0' === $category_slug || !term_exists($category_slug, 'product_category')) {
+		return;
+	}
+
+	$query->set('tax_query', array(
+		array(
+			'taxonomy' => 'product_category',
+			'field'    => 'slug',
+			'terms'    => $category_slug,
+		),
+	));
+}
+add_action('pre_get_posts', 'alupro_dynamic_filter_products_admin_by_category');
+
+/**
  * Register TinyMCE table plugin and add its button to the toolbar.
  */
 function alupro_add_tinymce_table_plugin($plugin_array)
