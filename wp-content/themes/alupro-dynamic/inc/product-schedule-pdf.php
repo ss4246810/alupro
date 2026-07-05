@@ -1376,7 +1376,6 @@ function alupro_dynamic_generate_schedule_pdf($schedule)
 
 	$start_page = function ($first_page) use ($pdf, $schedule, $draw_table_header) {
 		$pdf->add_page();
-		$pdf->rect(8, 0, 2, $pdf->page_height(), '#246bff', '#246bff');
 
 		if ($first_page) {
 			$logo_source = alupro_dynamic_pdf_logo_source();
@@ -1407,7 +1406,6 @@ function alupro_dynamic_generate_schedule_pdf($schedule)
 
 	$start_note_page = function () use ($pdf) {
 		$pdf->add_page();
-		$pdf->rect(8, 0, 2, $pdf->page_height(), '#246bff', '#246bff');
 		$pdf->line(50, 120, 545, 120, '#d9dce1', 0.6);
 
 		return 142;
