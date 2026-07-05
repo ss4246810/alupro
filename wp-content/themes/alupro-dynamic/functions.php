@@ -1629,12 +1629,11 @@ function alupro_add_editor_styles()
 add_action('admin_init', 'alupro_add_editor_styles');
 
 /**
- * Set default editor content for new Aluminium Product posts.
+ * Default editable product schedule table for Classic Editor.
  */
-function alupro_default_product_editor_content($content, $post)
+function alupro_dynamic_default_product_editor_table_html()
 {
-	if ('aluminium_product' === $post->post_type) {
-		$content = '
+	return '
 <table>
 	<thead>
 		<tr>
@@ -1691,7 +1690,17 @@ function alupro_default_product_editor_content($content, $post)
 </table>
 <p>&nbsp;</p>
 ';
+}
+
+/**
+ * Set default editor content for new Aluminium Product posts.
+ */
+function alupro_default_product_editor_content($content, $post)
+{
+	if ('aluminium_product' === $post->post_type) {
+		$content = alupro_dynamic_default_product_editor_table_html();
 	}
+
 	return $content;
 }
 add_filter('default_content', 'alupro_default_product_editor_content', 10, 2);

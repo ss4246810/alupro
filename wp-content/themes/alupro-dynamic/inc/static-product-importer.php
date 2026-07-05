@@ -205,6 +205,15 @@ function alupro_dynamic_static_product_importer_update_field($name, $value, $obj
 	update_post_meta((int) $object_id, $name, $value);
 }
 
+function alupro_dynamic_static_product_importer_table_html()
+{
+	if (function_exists('alupro_dynamic_default_product_editor_table_html')) {
+		return alupro_dynamic_default_product_editor_table_html();
+	}
+
+	return '<table><thead><tr><th>Thickness</th><th>Width</th><th>Length</th><th>Availability</th></tr></thead><tbody><tr><td rowspan="4">3.0mm</td><td>1220 mm</td><td>2440 mm</td><td>Stock</td></tr><tr><td>1500 mm</td><td>6000 mm</td><td>Stock</td></tr><tr><td>2000 mm</td><td>6000 mm</td><td>Stock</td></tr><tr><td>2200 mm</td><td>9000 mm</td><td>Indent</td></tr></tbody></table><p>&nbsp;</p>';
+}
+
 function alupro_dynamic_static_product_importer_find_product($product)
 {
 	$source_id = 'static:' . $product['category'] . ':' . $product['slug'];
@@ -305,21 +314,27 @@ function alupro_dynamic_static_product_importer_import()
 
 		$order_by_category[$product['category']] = isset($order_by_category[$product['category']]) ? $order_by_category[$product['category']] + 1 : 1;
 		$post_id = alupro_dynamic_static_product_importer_find_product($product);
+		$existing_content = $post_id ? get_post_field('post_content', $post_id) : '';
 		$post_data = array(
 			'post_type' => 'aluminium_product',
 			'post_status' => 'publish',
 			'post_title' => $product['title'],
 			'post_name' => $product['slug'],
 			'post_excerpt' => $product['description'],
-			'post_content' => '',
 			'menu_order' => $order_by_category[$product['category']],
 		);
 
 		if ($post_id) {
 			$post_data['ID'] = $post_id;
+
+			if (false === stripos((string) $existing_content, '<table')) {
+				$post_data['post_content'] = alupro_dynamic_static_product_importer_table_html();
+			}
+
 			$result = wp_update_post($post_data, true);
 			$counts['products_updated']++;
 		} else {
+			$post_data['post_content'] = alupro_dynamic_static_product_importer_table_html();
 			$result = wp_insert_post($post_data, true);
 			$counts['products_created']++;
 		}
