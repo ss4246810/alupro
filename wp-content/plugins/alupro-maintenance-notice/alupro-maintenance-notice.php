@@ -3,7 +3,7 @@
  * Plugin Name: Alupro Maintenance Notice
  * Description: Shows the Alupro maintenance notice that was previously hardcoded in the theme.
  * Version: 1.1.0
- * Author: Alupro
+ * Author: Suresh Shrestha
  * Text Domain: alupro-maintenance-notice
  */
 
