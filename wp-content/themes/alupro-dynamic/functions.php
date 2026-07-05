@@ -1460,7 +1460,6 @@ function alupro_dynamic_footer_settings_admin_page()
  */
 require_once get_template_directory() . '/inc/acf/acf-loader.php';
 require_once get_template_directory() . '/inc/product-schedule-pdf.php';
-require_once get_template_directory() . '/inc/static-product-importer.php';
 
 
 /**
