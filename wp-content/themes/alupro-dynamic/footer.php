@@ -7,8 +7,8 @@
 
 get_template_part('template-parts/footer-main');
 get_template_part('template-parts/quote-modal');
+get_template_part('template-parts/floating-actions');
 
-echo alupro_dynamic_static_fragment('<!-- whatsapp starts -->');
 wp_footer();
 ?>
 </body>

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Alupro Maintenance Notice
  * Description: Shows the Alupro maintenance notice that was previously hardcoded in the theme.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: Alupro
  * Text Domain: alupro-maintenance-notice
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-define('ALUPRO_MAINTENANCE_NOTICE_VERSION', '1.0.1');
+define('ALUPRO_MAINTENANCE_NOTICE_VERSION', '1.1.0');
 define('ALUPRO_MAINTENANCE_NOTICE_OPTION', 'alupro_maintenance_notice_options');
 
 function alupro_maintenance_notice_defaults()
@@ -210,6 +210,17 @@ function alupro_maintenance_notice_enqueue_assets()
 }
 add_action('wp_enqueue_scripts', 'alupro_maintenance_notice_enqueue_assets');
 
+function alupro_maintenance_notice_redirect_to_front_page()
+{
+	if (!alupro_maintenance_notice_should_show() || is_front_page()) {
+		return;
+	}
+
+	wp_safe_redirect(home_url('/'), 302);
+	exit;
+}
+add_action('template_redirect', 'alupro_maintenance_notice_redirect_to_front_page', 0);
+
 function alupro_maintenance_notice_render()
 {
 	if (!alupro_maintenance_notice_should_show()) {
@@ -220,19 +231,24 @@ function alupro_maintenance_notice_render()
 	alupro_maintenance_notice_render_inline_styles();
 	?>
 	<!-- Alupro Maintenance Notice Starts -->
-	<div class="alupro-maintenance-notice" role="status" aria-live="polite">
-		<div class="alupro-maintenance-notice__animation" aria-hidden="true">
-			<span class="alupro-maintenance-notice__gear alupro-maintenance-notice__gear--one"></span>
-			<span class="alupro-maintenance-notice__gear alupro-maintenance-notice__gear--two"></span>
-			<span class="alupro-maintenance-notice__gear alupro-maintenance-notice__gear--three"></span>
+	<script>
+		document.documentElement.classList.add('alupro-maintenance-active');
+	</script>
+	<div class="alupro-maintenance-notice-lock" aria-modal="true" aria-labelledby="alupro-maintenance-notice-title" role="dialog">
+		<div class="alupro-maintenance-notice" role="status" aria-live="polite">
+			<div class="alupro-maintenance-notice__animation" aria-hidden="true">
+				<span class="alupro-maintenance-notice__gear alupro-maintenance-notice__gear--one"></span>
+				<span class="alupro-maintenance-notice__gear alupro-maintenance-notice__gear--two"></span>
+				<span class="alupro-maintenance-notice__gear alupro-maintenance-notice__gear--three"></span>
+			</div>
+			<h2 id="alupro-maintenance-notice-title">
+				<?php echo esc_html(trim($options['title_prefix']) . ' '); ?>
+				<span><?php echo esc_html($options['title_highlight']); ?></span>
+			</h2>
+			<?php if ('' !== trim($options['message'])) : ?>
+				<p><?php echo esc_html($options['message']); ?></p>
+			<?php endif; ?>
 		</div>
-		<h2>
-			<?php echo esc_html($options['title_prefix']); ?> 
-			<span><?php echo esc_html($options['title_highlight']); ?></span>
-		</h2>
-		<?php if ('' !== trim($options['message'])) : ?>
-			<p><?php echo esc_html($options['message']); ?></p>
-		<?php endif; ?>
 	</div>
 	<!-- Alupro Maintenance Notice Ends -->
 	<?php
