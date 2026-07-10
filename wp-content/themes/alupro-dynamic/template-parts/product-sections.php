@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template Part: Dynamic Product Sections.
  * Renders all 5 materials-showcase slider sections dynamically.
@@ -223,309 +224,308 @@ $categories = get_terms(array(
 if (!empty($categories) && !is_wp_error($categories)) :
 	$rendered_count = 0;
 	foreach ($categories as $index => $term) :
-	$slug = $term->slug;
+		$slug = $term->slug;
 
-	// Query posts of type 'aluminium_product' in this category
-	$query_args = array(
-		'post_type'      => 'aluminium_product',
-		'posts_per_page' => -1,
-		'orderby'        => 'menu_order',
-		'order'          => 'ASC',
-		'tax_query'      => array(
-			array(
-				'taxonomy' => 'product_category',
-				'field'    => 'slug',
-				'terms'    => $slug,
+		// Query posts of type 'aluminium_product' in this category
+		$query_args = array(
+			'post_type'      => 'aluminium_product',
+			'posts_per_page' => -1,
+			'orderby'        => 'menu_order',
+			'order'          => 'ASC',
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'product_category',
+					'field'    => 'slug',
+					'terms'    => $slug,
+				)
 			)
-		)
-	);
-	$products_query = new WP_Query($query_args);
-
-	// Hide the section by default if the admin has not added any product
-	if (!$products_query->have_posts()) {
-		continue;
-	}
-
-	$term_id = 'product_category_' . $term->term_id;
-	$defaults = isset($cat_defaults[$slug]) ? $cat_defaults[$slug] : array(
-		'badge_text' => 'Product Range',
-		'badge_icon' => 'fa-solid fa-layer-group',
-		'title' => $term->name,
-		'description' => $term->description ? $term->description : sprintf(__('Explore our %s aluminium product range.', 'alupro-dynamic'), $term->name),
-		'features_title' => 'Key Features',
-		'features_icon' => 'fa-solid fa-star',
-		'features' => array(),
-		'ideal_title' => 'Ideal For',
-		'ideal_icon' => 'fa-solid fa-bullseye',
-		'ideal' => array(),
-		'carousel_icon' => 'fa-solid fa-layer-group',
-		'carousel_subtitle' => $term->name,
-		'carousel_title' => $term->name,
-	);
-
-	if (isset($carousel_mappings[$slug])) {
-		$mapping = $carousel_mappings[$slug];
-	} else {
-		$anchor_id = function_exists('alupro_dynamic_product_category_anchor_id') ? alupro_dynamic_product_category_anchor_id($term) : 'product-category-' . sanitize_title($slug);
-		$mapping = array(
-			'id' => $anchor_id,
-			'carousel_id' => 'product-carousel-' . sanitize_title($slug),
-			'prev_id' => 'product-prev-' . sanitize_title($slug),
-			'next_id' => 'product-next-' . sanitize_title($slug),
-			'slide_class' => 'product-slide-' . sanitize_title($slug),
 		);
-	}
+		$products_query = new WP_Query($query_args);
 
-	// Retrieve ACF field values with static defaults as fallbacks
-	$badge_text = function_exists('get_field') ? get_field('cat_badge_text', $term_id) : '';
-	if (empty($badge_text)) {
-		$badge_text = $defaults['badge_text'];
-	}
+		// Hide the section by default if the admin has not added any product
+		if (!$products_query->have_posts()) {
+			continue;
+		}
 
-	$badge_icon = function_exists('get_field') ? get_field('cat_badge_icon', $term_id) : '';
-	if (empty($badge_icon)) {
-		$badge_icon = $defaults['badge_icon'];
-	}
+		$term_id = 'product_category_' . $term->term_id;
+		$defaults = isset($cat_defaults[$slug]) ? $cat_defaults[$slug] : array(
+			'badge_text' => 'Product Range',
+			'badge_icon' => 'fa-solid fa-layer-group',
+			'title' => $term->name,
+			'description' => $term->description ? $term->description : sprintf(__('Explore our %s aluminium product range.', 'alupro-dynamic'), $term->name),
+			'features_title' => 'Key Features',
+			'features_icon' => 'fa-solid fa-star',
+			'features' => array(),
+			'ideal_title' => 'Ideal For',
+			'ideal_icon' => 'fa-solid fa-bullseye',
+			'ideal' => array(),
+			'carousel_icon' => 'fa-solid fa-layer-group',
+			'carousel_subtitle' => $term->name,
+			'carousel_title' => $term->name,
+		);
 
-	$section_title = function_exists('get_field') ? get_field('cat_section_title', $term_id) : '';
-	if (empty($section_title)) {
-		$section_title = $defaults['title'];
-	}
+		if (isset($carousel_mappings[$slug])) {
+			$mapping = $carousel_mappings[$slug];
+		} else {
+			$anchor_id = function_exists('alupro_dynamic_product_category_anchor_id') ? alupro_dynamic_product_category_anchor_id($term) : 'product-category-' . sanitize_title($slug);
+			$mapping = array(
+				'id' => $anchor_id,
+				'carousel_id' => 'product-carousel-' . sanitize_title($slug),
+				'prev_id' => 'product-prev-' . sanitize_title($slug),
+				'next_id' => 'product-next-' . sanitize_title($slug),
+				'slide_class' => 'product-slide-' . sanitize_title($slug),
+			);
+		}
 
-	$section_desc = function_exists('get_field') ? get_field('cat_section_description', $term_id) : '';
-	if (empty($section_desc)) {
-		$section_desc = $defaults['description'];
-	}
+		// Retrieve ACF field values with static defaults as fallbacks
+		$badge_text = function_exists('get_field') ? get_field('cat_badge_text', $term_id) : '';
+		if (empty($badge_text)) {
+			$badge_text = $defaults['badge_text'];
+		}
 
-	// Features
-	$features_title = function_exists('get_field') ? get_field('cat_features_title', $term_id) : '';
-	if (empty($features_title)) {
-		$features_title = $defaults['features_title'];
-	}
+		$badge_icon = function_exists('get_field') ? get_field('cat_badge_icon', $term_id) : '';
+		if (empty($badge_icon)) {
+			$badge_icon = $defaults['badge_icon'];
+		}
 
-	$features_icon = function_exists('get_field') ? get_field('cat_features_icon', $term_id) : '';
-	if (empty($features_icon)) {
-		$features_icon = $defaults['features_icon'];
-	}
+		$section_title = function_exists('get_field') ? get_field('cat_section_title', $term_id) : '';
+		if (empty($section_title)) {
+			$section_title = $defaults['title'];
+		}
 
-	$features_list_raw = function_exists('get_field') ? get_field('cat_features_list', $term_id) : '';
-	if (!empty($features_list_raw)) {
-		$features = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $features_list_raw))));
-	} else {
-		$features = $defaults['features'];
-	}
+		$section_desc = function_exists('get_field') ? get_field('cat_section_description', $term_id) : '';
+		if (empty($section_desc)) {
+			$section_desc = $defaults['description'];
+		}
 
-	// Ideal For
-	$ideal_title = function_exists('get_field') ? get_field('cat_ideal_title', $term_id) : '';
-	if (empty($ideal_title)) {
-		$ideal_title = $defaults['ideal_title'];
-	}
+		// Features
+		$features_title = function_exists('get_field') ? get_field('cat_features_title', $term_id) : '';
+		if (empty($features_title)) {
+			$features_title = $defaults['features_title'];
+		}
 
-	$ideal_icon = function_exists('get_field') ? get_field('cat_ideal_icon', $term_id) : '';
-	if (empty($ideal_icon)) {
-		$ideal_icon = $defaults['ideal_icon'];
-	}
+		$features_icon = function_exists('get_field') ? get_field('cat_features_icon', $term_id) : '';
+		if (empty($features_icon)) {
+			$features_icon = $defaults['features_icon'];
+		}
 
-	$ideal_list_raw = function_exists('get_field') ? get_field('cat_ideal_list', $term_id) : '';
-	if (!empty($ideal_list_raw)) {
-		$ideal = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $ideal_list_raw))));
-	} else {
-		$ideal = $defaults['ideal'];
-	}
+		$features_list_raw = function_exists('get_field') ? get_field('cat_features_list', $term_id) : '';
+		if (!empty($features_list_raw)) {
+			$features = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $features_list_raw))));
+		} else {
+			$features = $defaults['features'];
+		}
 
-	// Carousel details
-	$carousel_icon = function_exists('get_field') ? get_field('cat_carousel_icon', $term_id) : '';
-	if (empty($carousel_icon)) {
-		$carousel_icon = $defaults['carousel_icon'];
-	}
+		// Ideal For
+		$ideal_title = function_exists('get_field') ? get_field('cat_ideal_title', $term_id) : '';
+		if (empty($ideal_title)) {
+			$ideal_title = $defaults['ideal_title'];
+		}
 
-	$carousel_subtitle = function_exists('get_field') ? get_field('cat_carousel_subtitle', $term_id) : '';
-	if (empty($carousel_subtitle)) {
-		$carousel_subtitle = $defaults['carousel_subtitle'];
-	}
+		$ideal_icon = function_exists('get_field') ? get_field('cat_ideal_icon', $term_id) : '';
+		if (empty($ideal_icon)) {
+			$ideal_icon = $defaults['ideal_icon'];
+		}
 
-	$carousel_title = function_exists('get_field') ? get_field('cat_carousel_title', $term_id) : '';
-	if (empty($carousel_title)) {
-		$carousel_title = $defaults['carousel_title'];
-	}
+		$ideal_list_raw = function_exists('get_field') ? get_field('cat_ideal_list', $term_id) : '';
+		if (!empty($ideal_list_raw)) {
+			$ideal = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $ideal_list_raw))));
+		} else {
+			$ideal = $defaults['ideal'];
+		}
 
-	// Determine background style and top border gradient (alternating based on rendered sections)
-	$is_even = ($rendered_count % 2 === 0);
-	$bg_class = $is_even ? 'bg-[#F8FAFC]' : 'bg-white';
-	$rendered_count++;
+		// Carousel details
+		$carousel_icon = function_exists('get_field') ? get_field('cat_carousel_icon', $term_id) : '';
+		if (empty($carousel_icon)) {
+			$carousel_icon = $defaults['carousel_icon'];
+		}
 
-	$slides = array();
+		$carousel_subtitle = function_exists('get_field') ? get_field('cat_carousel_subtitle', $term_id) : '';
+		if (empty($carousel_subtitle)) {
+			$carousel_subtitle = $defaults['carousel_subtitle'];
+		}
 
-	if ($products_query->have_posts()) {
-		while ($products_query->have_posts()) {
-			$products_query->the_post();
-			$pid = get_the_ID();
+		$carousel_title = function_exists('get_field') ? get_field('cat_carousel_title', $term_id) : '';
+		if (empty($carousel_title)) {
+			$carousel_title = $defaults['carousel_title'];
+		}
 
-			$p_status = function_exists('get_field') ? get_field('product_status', $pid) : 'In Stock';
-			$p_short_desc = function_exists('get_field') ? get_field('product_short_desc', $pid) : '';
-			$p_image = function_exists('get_field') ? get_field('product_image', $pid) : '';
-			if (empty($p_image)) {
-				// Try post thumbnail
-				$p_image = get_the_post_thumbnail_url($pid, 'full');
+		// Determine background style and top border gradient (alternating based on rendered sections)
+		$is_even = ($rendered_count % 2 === 0);
+		$bg_class = $is_even ? 'bg-[#F8FAFC]' : 'bg-white';
+		$rendered_count++;
+
+		$slides = array();
+
+		if ($products_query->have_posts()) {
+			while ($products_query->have_posts()) {
+				$products_query->the_post();
+				$pid = get_the_ID();
+
+				$p_status = function_exists('get_field') ? get_field('product_status', $pid) : 'In Stock';
+				$p_short_desc = function_exists('get_field') ? get_field('product_short_desc', $pid) : '';
+				$p_image = function_exists('get_field') ? get_field('product_image', $pid) : '';
+				if (empty($p_image)) {
+					// Try post thumbnail
+					$p_image = get_the_post_thumbnail_url($pid, 'full');
+				}
+
+				$slides[] = array(
+					'title'  => get_the_title(),
+					'desc'   => $p_short_desc,
+					'image'  => $p_image,
+					'status' => $p_status,
+					'link'   => get_permalink(),
+				);
 			}
-
-			$slides[] = array(
-				'title'  => get_the_title(),
-				'desc'   => $p_short_desc,
-				'image'  => $p_image,
-				'status' => $p_status,
-				'link'   => get_permalink(),
-			);
+			wp_reset_postdata();
+		} else {
+			// Fallback to default slides
+			foreach (isset($slide_defaults[$slug]) ? $slide_defaults[$slug] : array() as $def_slide) {
+				$slides[] = array(
+					'title'  => $def_slide['title'],
+					'desc'   => $def_slide['desc'],
+					'image'  => get_theme_file_uri('images/' . $def_slide['img']),
+					'status' => $def_slide['status'],
+					'link'   => '#',
+				);
+			}
 		}
-		wp_reset_postdata();
-	} else {
-		// Fallback to default slides
-		foreach (isset($slide_defaults[$slug]) ? $slide_defaults[$slug] : array() as $def_slide) {
-			$slides[] = array(
-				'title'  => $def_slide['title'],
-				'desc'   => $def_slide['desc'],
-				'image'  => get_theme_file_uri('images/' . $def_slide['img']),
-				'status' => $def_slide['status'],
-				'link'   => '#',
-			);
-		}
-	}
-	?>
-	<!-- <?php echo esc_html($term->name); ?> Section Starts -->
-	<section class="materials-showcase relative overflow-hidden <?php echo esc_attr($bg_class); ?> px-6 py-16 md:py-24">
-		<?php if ($is_even) : ?>
-			<div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#190E5D]/20 to-transparent"></div>
-		<?php endif; ?>
-		<div class="relative max-w-7xl mx-auto">
-			<div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-				<div>
-					<span class="inline-flex items-center gap-2 rounded-full border border-[#00a2e0]/30 bg-[#e6f6fc] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#1687C7]">
-						<?php if ($badge_icon) : ?>
-							<i class="<?php echo esc_attr($badge_icon); ?>"></i>
-						<?php endif; ?>
-						<?php echo esc_html($badge_text); ?>
-					</span>
-					<h2 class="mt-6 text-5xl font-extrabold leading-tight text-[#111827] sm:text-4xl lg:text-5xl">
-						<?php echo esc_html($section_title); ?>
-					</h2>
-					<div class="mt-5 h-1 w-16 rounded-full bg-[#00a2e0]"></div>
-					<p class="mt-7 text-base leading-8 text-[#4B5563] md:text-lg">
-						<?php echo esc_html($section_desc); ?>
-					</p>
-					<div class="mt-8 grid gap-5 lg:grid-cols-2">
-						<!-- Key Features -->
-						<div class="rounded-2xl border border-[#00a2e0]/20 bg-gradient-to-br from-[#e6f6fc] to-white p-6 shadow-sm">
-							<div class="mb-5 flex items-center gap-3">
-								<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#00a2e0] text-white shadow-md shadow-[#00a2e0]/30">
-									<i class="<?php echo esc_attr($features_icon); ?> text-xs"></i>
-								</div>
-								<h3 class="text-base font-extrabold uppercase tracking-widest text-[#111827]">
-									<?php echo esc_html($features_title); ?>
-								</h3>
-							</div>
-							<?php if (!empty($features)) : ?>
-								<ul class="space-y-3">
-									<?php foreach ($features as $feature) : ?>
-										<li class="flex items-start gap-3">
-											<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00a2e0] text-white">
-												<i class="fa-solid fa-check text-[9px]"></i>
-											</span>
-											<span class="text-sm leading-relaxed text-[#374151]"><?php echo esc_html($feature); ?></span>
-										</li>
-									<?php endforeach; ?>
-								</ul>
-							<?php endif; ?>
-						</div>
-
-						<!-- Ideal For -->
-						<div class="rounded-2xl border border-[#190E5D]/15 bg-gradient-to-br from-[#f0eeff] to-white p-6 shadow-sm">
-							<div class="mb-5 flex items-center gap-3">
-								<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#190E5D] text-white shadow-md shadow-[#190E5D]/30">
-									<i class="<?php echo esc_attr($ideal_icon); ?> text-xs"></i>
-								</div>
-								<h3 class="text-base font-extrabold uppercase tracking-widest text-[#111827]">
-									<?php echo esc_html($ideal_title); ?>
-								</h3>
-							</div>
-							<?php if (!empty($ideal)) : ?>
-								<ul class="space-y-3">
-									<?php foreach ($ideal as $item) : ?>
-										<li class="flex items-start gap-3">
-											<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#190E5D] text-white">
-												<i class="fa-solid fa-check text-[9px]"></i>
-											</span>
-											<span class="text-sm leading-relaxed text-[#374151]"><?php echo esc_html($item); ?></span>
-										</li>
-									<?php endforeach; ?>
-								</ul>
-							<?php endif; ?>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div id="<?php echo esc_attr($mapping['id']); ?>" class="mt-14 flex flex-col gap-6 scroll-mt-[140px] sm:flex-row sm:items-center sm:justify-between">
-				<div class="flex items-center gap-4">
-					<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#e6f6fc] text-[#00a2e0]">
-						<i class="<?php echo esc_attr($carousel_icon); ?> text-2xl"></i>
-					</div>
+?>
+		<!-- <?php echo esc_html($term->name); ?> Section Starts -->
+		<section class="materials-showcase relative overflow-hidden <?php echo esc_attr($bg_class); ?> px-6 py-16 md:py-24">
+			<?php if ($is_even) : ?>
+				<div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#190E5D]/20 to-transparent"></div>
+			<?php endif; ?>
+			<div class="relative max-w-7xl mx-auto">
+				<div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 					<div>
-						<p class="text-sm font-bold uppercase tracking-[0.16em] text-[#00a2e0]">
-							<?php echo esc_html($carousel_subtitle); ?>
+						<span class="inline-flex items-center gap-2 rounded-full border border-[#00a2e0]/30 bg-[#e6f6fc] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#1687C7]">
+							<?php if ($badge_icon) : ?>
+								<i class="<?php echo esc_attr($badge_icon); ?>"></i>
+							<?php endif; ?>
+							<?php echo esc_html($badge_text); ?>
+						</span>
+						<h2 class="mt-6 text-2xl md:text-4xl lg:text-5xl font-extrabold leading-tight text-[#111827]">
+							<?php echo esc_html($section_title); ?>
+						</h2>
+						<div class="mt-5 h-1 w-16 rounded-full bg-[#00a2e0]"></div>
+						<p class="mt-7 text-base leading-8 text-[#4B5563] md:text-lg">
+							<?php echo esc_html($section_desc); ?>
 						</p>
-						<h3 class="text-2xl font-extrabold text-[#190E5D]">
-							<?php echo esc_html($carousel_title); ?>
-						</h3>
+						<div class="mt-8 grid gap-5 lg:grid-cols-2">
+							<!-- Key Features -->
+							<div class="rounded-2xl border border-[#00a2e0]/20 bg-gradient-to-br from-[#e6f6fc] to-white p-6 shadow-sm">
+								<div class="mb-5 flex items-center gap-3">
+									<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#00a2e0] text-white shadow-md shadow-[#00a2e0]/30">
+										<i class="<?php echo esc_attr($features_icon); ?> text-xs"></i>
+									</div>
+									<h3 class="text-base font-extrabold uppercase tracking-widest text-[#111827]">
+										<?php echo esc_html($features_title); ?>
+									</h3>
+								</div>
+								<?php if (!empty($features)) : ?>
+									<ul class="space-y-3">
+										<?php foreach ($features as $feature) : ?>
+											<li class="flex items-start gap-3">
+												<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00a2e0] text-white">
+													<i class="fa-solid fa-check text-[9px]"></i>
+												</span>
+												<span class="text-sm leading-relaxed text-[#374151]"><?php echo esc_html($feature); ?></span>
+											</li>
+										<?php endforeach; ?>
+									</ul>
+								<?php endif; ?>
+							</div>
+
+							<!-- Ideal For -->
+							<div class="rounded-2xl border border-[#190E5D]/15 bg-gradient-to-br from-[#f0eeff] to-white p-6 shadow-sm">
+								<div class="mb-5 flex items-center gap-3">
+									<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#190E5D] text-white shadow-md shadow-[#190E5D]/30">
+										<i class="<?php echo esc_attr($ideal_icon); ?> text-xs"></i>
+									</div>
+									<h3 class="text-base font-extrabold uppercase tracking-widest text-[#111827]">
+										<?php echo esc_html($ideal_title); ?>
+									</h3>
+								</div>
+								<?php if (!empty($ideal)) : ?>
+									<ul class="space-y-3">
+										<?php foreach ($ideal as $item) : ?>
+											<li class="flex items-start gap-3">
+												<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#190E5D] text-white">
+													<i class="fa-solid fa-check text-[9px]"></i>
+												</span>
+												<span class="text-sm leading-relaxed text-[#374151]"><?php echo esc_html($item); ?></span>
+											</li>
+										<?php endforeach; ?>
+									</ul>
+								<?php endif; ?>
+							</div>
+						</div>
 					</div>
 				</div>
 
-				<div class="flex items-center gap-3">
-					<button type="button" id="<?php echo esc_attr($mapping['prev_id']); ?>" class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[#190E5D]/10 bg-white text-[#190E5D] shadow-sm transition-all hover:border-[#00a2e0]/40 hover:bg-[#e6f6fc] hover:text-[#00a2e0]" aria-label="Previous product">
-						<i class="fa-solid fa-arrow-left"></i>
-					</button>
-					<button type="button" id="<?php echo esc_attr($mapping['next_id']); ?>" class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[#190E5D]/10 bg-white text-[#190E5D] shadow-sm transition-all hover:border-[#00a2e0]/40 hover:bg-[#e6f6fc] hover:text-[#00a2e0]" aria-label="Next product">
-						<i class="fa-solid fa-arrow-right"></i>
-					</button>
+				<div id="<?php echo esc_attr($mapping['id']); ?>" class="mt-14 flex flex-col gap-6 scroll-mt-[140px] sm:flex-row sm:items-center sm:justify-between">
+					<div class="flex items-center gap-4">
+						<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#e6f6fc] text-[#00a2e0]">
+							<i class="<?php echo esc_attr($carousel_icon); ?> text-2xl"></i>
+						</div>
+						<div>
+							<p class="text-sm font-bold uppercase tracking-[0.16em] text-[#00a2e0]">
+								<?php echo esc_html($carousel_subtitle); ?>
+							</p>
+							<h3 class="text-2xl font-extrabold text-[#190E5D]">
+								<?php echo esc_html($carousel_title); ?>
+							</h3>
+						</div>
+					</div>
+
+					<div class="flex items-center gap-3">
+						<button type="button" id="<?php echo esc_attr($mapping['prev_id']); ?>" class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[#190E5D]/10 bg-white text-[#190E5D] shadow-sm transition-all hover:border-[#00a2e0]/40 hover:bg-[#e6f6fc] hover:text-[#00a2e0]" aria-label="Previous product">
+							<i class="fa-solid fa-arrow-left"></i>
+						</button>
+						<button type="button" id="<?php echo esc_attr($mapping['next_id']); ?>" class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[#190E5D]/10 bg-white text-[#190E5D] shadow-sm transition-all hover:border-[#00a2e0]/40 hover:bg-[#e6f6fc] hover:text-[#00a2e0]" aria-label="Next product">
+							<i class="fa-solid fa-arrow-right"></i>
+						</button>
+					</div>
+				</div>
+
+				<div
+					id="<?php echo esc_attr($mapping['carousel_id']); ?>"
+					class="<?php echo esc_attr($mapping['carousel_id']); ?> product-carousel mt-6 flex gap-6 overflow-x-auto scroll-smooth py-8"
+					data-product-carousel
+					data-prev-id="<?php echo esc_attr($mapping['prev_id']); ?>"
+					data-next-id="<?php echo esc_attr($mapping['next_id']); ?>"
+					data-slide-selector=".product-slide">
+					<?php foreach ($slides as $slide) :
+						$status_class = (trim($slide['status']) === 'In Stock') ? 'bg-[#047857] text-white' : 'bg-[#F4C026] text-[#190E5D]';
+					?>
+						<a href="<?php echo esc_url($slide['link']); ?>" class="<?php echo esc_attr($mapping['slide_class']); ?> product-slide group overflow-hidden rounded-2xl border border-[#190E5D]/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#00a2e0]/35 hover:shadow-xl hover:shadow-[#190E5D]/10">
+							<div class="relative h-44 overflow-hidden bg-[#190E5D]">
+								<?php if ($slide['image']) : ?>
+									<img src="<?php echo esc_url($slide['image']); ?>" alt="<?php echo esc_attr($slide['title']); ?>" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+								<?php endif; ?>
+								<div class="absolute inset-0 bg-gradient-to-t from-[#120A45]/70 via-[#120A45]/10 to-transparent"></div>
+								<?php if (!empty($slide['status'])) : ?>
+									<span class="absolute right-4 top-4 rounded-full px-4 py-1.5 text-xs font-bold uppercase <?php echo esc_attr($status_class); ?>">
+										<?php echo esc_html($slide['status']); ?>
+									</span>
+								<?php endif; ?>
+							</div>
+							<div class="p-6">
+								<h4 class="text-xl font-extrabold leading-snug text-[#111827]">
+									<?php echo esc_html($slide['title']); ?>
+								</h4>
+								<p class="mt-4 text-sm leading-6 text-[#4B5563]">
+									<?php echo esc_html($slide['desc']); ?>
+								</p>
+							</div>
+						</a>
+					<?php endforeach; ?>
 				</div>
 			</div>
-
-			<div
-				id="<?php echo esc_attr($mapping['carousel_id']); ?>"
-				class="<?php echo esc_attr($mapping['carousel_id']); ?> product-carousel mt-6 flex gap-6 overflow-x-auto scroll-smooth py-8"
-				data-product-carousel
-				data-prev-id="<?php echo esc_attr($mapping['prev_id']); ?>"
-				data-next-id="<?php echo esc_attr($mapping['next_id']); ?>"
-				data-slide-selector=".product-slide"
-			>
-				<?php foreach ($slides as $slide) :
-					$status_class = (trim($slide['status']) === 'In Stock') ? 'bg-[#047857] text-white' : 'bg-[#F4C026] text-[#190E5D]';
-					?>
-					<a href="<?php echo esc_url($slide['link']); ?>" class="<?php echo esc_attr($mapping['slide_class']); ?> product-slide group overflow-hidden rounded-2xl border border-[#190E5D]/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#00a2e0]/35 hover:shadow-xl hover:shadow-[#190E5D]/10">
-						<div class="relative h-44 overflow-hidden bg-[#190E5D]">
-							<?php if ($slide['image']) : ?>
-								<img src="<?php echo esc_url($slide['image']); ?>" alt="<?php echo esc_attr($slide['title']); ?>" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-							<?php endif; ?>
-							<div class="absolute inset-0 bg-gradient-to-t from-[#120A45]/70 via-[#120A45]/10 to-transparent"></div>
-							<?php if (!empty($slide['status'])) : ?>
-								<span class="absolute right-4 top-4 rounded-full px-4 py-1.5 text-xs font-bold uppercase <?php echo esc_attr($status_class); ?>">
-									<?php echo esc_html($slide['status']); ?>
-								</span>
-							<?php endif; ?>
-						</div>
-						<div class="p-6">
-							<h4 class="text-xl font-extrabold leading-snug text-[#111827]">
-								<?php echo esc_html($slide['title']); ?>
-							</h4>
-							<p class="mt-4 text-sm leading-6 text-[#4B5563]">
-								<?php echo esc_html($slide['desc']); ?>
-							</p>
-						</div>
-					</a>
-				<?php endforeach; ?>
-			</div>
-		</div>
-	</section>
-	<!-- <?php echo esc_html($term->name); ?> Section Ends -->
+		</section>
+		<!-- <?php echo esc_html($term->name); ?> Section Ends -->
 <?php
 	endforeach;
 endif;

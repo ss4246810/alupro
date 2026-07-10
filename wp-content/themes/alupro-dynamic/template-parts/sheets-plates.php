@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Homepage Sheets & Plates Aluminium Section.
  *
@@ -8,7 +9,8 @@
 $front_page_id = get_option('page_on_front');
 
 if (!function_exists('alupro_get_sheets_field')) {
-	function alupro_get_sheets_field($field_name, $default_value, $post_id = null) {
+	function alupro_get_sheets_field($field_name, $default_value, $post_id = null)
+	{
 		if (function_exists('get_field')) {
 			$val = get_field($field_name, $post_id);
 			if (!empty($val)) {
@@ -115,7 +117,7 @@ for ($i = 1; $i <= 6; $i++) {
 					<?php endif; ?>
 					<?php echo esc_html($sheets_badge_text); ?>
 				</span>
-				<h2 class="mt-6 text-5xl font-extrabold leading-tight text-[#111827] sm:text-4xl lg:text-5xl">
+				<h2 class="mt-6 text-2xl md:text-4xl lg:text-5xl font-extrabold leading-tight text-[#111827]">
 					<?php echo esc_html($sheets_title); ?>
 				</h2>
 				<div class="mt-5 h-1 w-16 rounded-full bg-[#00a2e0]"></div>

@@ -54,7 +54,7 @@ add_filter('use_widgets_block_editor', '__return_false');
  *
  * - Called by: WordPress core (hooked to 'wp_enqueue_scripts' action).
  * - Related Files: header.php (via wp_head()) and footer.php (via wp_footer()).
- * - Purpose: Enqueues dynamic stylesheets (Google Fonts, Font Awesome, css/style.css, active theme's style.css)
+ * - Purpose: Enqueues dynamic stylesheets (Google Fonts, local icon subset, css/style.css, active theme's style.css)
  *   and front-end scripts (Tailwind Play CDN and theme's js/all.js).
  */
 function alupro_dynamic_enqueue_assets()
@@ -67,10 +67,10 @@ function alupro_dynamic_enqueue_assets()
 	);
 
 	wp_enqueue_style(
-		'alupro-font-awesome',
-		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css',
+		'alupro-fontawesome-subset',
+		get_theme_file_uri('css/fontawesome-subset.css'),
 		array(),
-		'6.5.2'
+		filemtime(get_theme_file_path('css/fontawesome-subset.css'))
 	);
 
 	wp_enqueue_script(
@@ -84,7 +84,7 @@ function alupro_dynamic_enqueue_assets()
 	wp_enqueue_style(
 		'alupro-design',
 		get_theme_file_uri('css/style.css'),
-		array('alupro-google-fonts', 'alupro-font-awesome'),
+		array('alupro-google-fonts', 'alupro-fontawesome-subset'),
 		filemtime(get_theme_file_path('css/style.css'))
 	);
 
