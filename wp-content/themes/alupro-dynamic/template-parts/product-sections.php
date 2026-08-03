@@ -364,10 +364,9 @@ if (!empty($categories) && !is_wp_error($categories)) :
 
 				$p_status = function_exists('get_field') ? get_field('product_status', $pid) : 'In Stock';
 				$p_short_desc = function_exists('get_field') ? get_field('product_short_desc', $pid) : '';
-				$p_image = function_exists('get_field') ? get_field('product_image', $pid) : '';
+				$p_image = get_the_post_thumbnail_url($pid, 'full');
 				if (empty($p_image)) {
-					// Try post thumbnail
-					$p_image = get_the_post_thumbnail_url($pid, 'full');
+					$p_image = function_exists('get_field') ? get_field('product_image', $pid) : '';
 				}
 
 				$slides[] = array(

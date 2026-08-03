@@ -146,9 +146,10 @@ acf_add_local_field_group(array(
 		),
 		array(
 			'key' => 'field_prod_image',
-			'label' => __('Product Image', 'alupro-dynamic'),
+			'label' => __('Product Image (PDF/Table)', 'alupro-dynamic'),
 			'name' => 'product_image',
 			'type' => 'image',
+			'instructions' => __('Used in the product schedule page and generated PDF header. Use the WordPress Featured Image for the front/homepage product card.', 'alupro-dynamic'),
 			'return_format' => 'url',
 			'wrapper' => array('width' => '50%'),
 		),
