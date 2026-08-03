@@ -40,7 +40,7 @@ $footer_legal_fallback = array(
 	<div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F4C026]/50 to-transparent"></div>
 
 	<div class="relative max-w-7xl mx-auto py-16 md:py-20">
-		<div class="grid gap-12 border-b border-white/10 pb-12 lg:grid-cols-[1.15fr_0.75fr_0.9fr_0.75fr_1fr]">
+		<div class="grid gap-12 border-b border-white/10 pb-12 lg:grid-cols-[1.3fr_0.8fr_0.8fr_1fr]">
 			<div>
 				<a href="<?php echo esc_url(home_url('/')); ?>" class="inline-flex items-center">
 					<img
@@ -91,12 +91,14 @@ $footer_legal_fallback = array(
 				<?php alupro_dynamic_footer_menu('footer_2', $footer_2_fallback); ?>
 			</div>
 
+			<?php /*
 			<div>
 				<h3 class="text-sm font-bold uppercase tracking-[0.18em] text-[#00a2e0]">
 					<?php echo esc_html($footer_settings['footer_3_title']); ?>
 				</h3>
 				<?php alupro_dynamic_footer_menu('footer_3', $footer_3_fallback); ?>
 			</div>
+			*/ ?>
 
 			<div>
 				<h3 class="text-sm font-bold uppercase tracking-[0.18em] text-[#00a2e0]">
