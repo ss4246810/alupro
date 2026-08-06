@@ -81,7 +81,7 @@ acf_add_local_field_group(array(
 			'label' => __('Card 2 Link', 'alupro-dynamic'),
 			'name' => 'browse_card_2_link',
 			'type' => 'text',
-			'default_value' => '#',
+			'default_value' => '#structural-grade-aluminium',
 			'wrapper' => array('width' => '25%'),
 		),
 		array(
@@ -113,7 +113,7 @@ acf_add_local_field_group(array(
 			'label' => __('Card 3 Link', 'alupro-dynamic'),
 			'name' => 'browse_card_3_link',
 			'type' => 'text',
-			'default_value' => '#',
+			'default_value' => '#extrusions-profiles-aluminium',
 			'wrapper' => array('width' => '25%'),
 		),
 		array(
@@ -145,7 +145,7 @@ acf_add_local_field_group(array(
 			'label' => __('Card 4 Link', 'alupro-dynamic'),
 			'name' => 'browse_card_4_link',
 			'type' => 'text',
-			'default_value' => '#',
+			'default_value' => '#aerospace-grade-aluminium',
 			'wrapper' => array('width' => '25%'),
 		),
 		array(

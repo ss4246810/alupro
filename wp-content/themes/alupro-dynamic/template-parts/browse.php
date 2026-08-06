@@ -19,6 +19,14 @@ if (!function_exists('alupro_get_browse_field')) {
 	}
 }
 
+if (!function_exists('alupro_get_browse_link_field')) {
+	function alupro_get_browse_link_field($field_name, $default_value, $post_id = null) {
+		$val = alupro_get_browse_field($field_name, $default_value, $post_id);
+
+		return '#' === trim((string) $val) ? $default_value : $val;
+	}
+}
+
 $browse_title = alupro_get_browse_field('browse_title', 'Browse Aluminium by Industry', $front_page_id);
 $browse_desc = alupro_get_browse_field('browse_desc', 'We provide high-performance aluminium solutions tailored to the specific demands of different sectors:', $front_page_id);
 
@@ -43,18 +51,21 @@ for ($i = 1; $i <= 4; $i++) {
 		$icon_default = 'fa-solid fa-microchip';
 		$title_default = 'Precision Semiconductor';
 		$desc_default = 'Stable, high-precision aluminium grades ideal for equipment frames, chambers, platforms, and critical components where dimensional stability and cleanliness are essential.';
+		$link_default = '#structural-grade-aluminium';
 		$icon_bg = 'bg-[#F2EDFA]';
 		$icon_color = 'text-[#8C73B8]';
 	} elseif ($i === 3) {
 		$icon_default = 'fa-solid fa-industry';
 		$title_default = 'General Engineering';
 		$desc_default = 'Versatile structural aluminium profiles, bars, plates, and sheets for fabrication, machinery, frameworks, and industrial equipment.';
+		$link_default = '#extrusions-profiles-aluminium';
 		$icon_bg = 'bg-[#FFF3D9]';
 		$icon_color = 'text-[#C99600]';
 	} else {
 		$icon_default = 'fa-solid fa-plane';
 		$title_default = 'Aerospace Manufacturing';
 		$desc_default = 'High-strength aerospace aluminium alloys engineered for critical structural components, offering superior strength-to-weight ratio and reliability.';
+		$link_default = '#aerospace-grade-aluminium';
 		$icon_bg = 'bg-[#EAF0FF]';
 		$icon_color = 'text-[#4478D8]';
 	}
@@ -63,7 +74,7 @@ for ($i = 1; $i <= 4; $i++) {
 		'icon'  => alupro_get_browse_field("browse_card_{$i}_icon", $icon_default, $front_page_id),
 		'title' => alupro_get_browse_field("browse_card_{$i}_title", $title_default, $front_page_id),
 		'desc'  => alupro_get_browse_field("browse_card_{$i}_desc", $desc_default, $front_page_id),
-		'link'  => alupro_get_browse_field("browse_card_{$i}_link", $link_default, $front_page_id),
+		'link'  => alupro_get_browse_link_field("browse_card_{$i}_link", $link_default, $front_page_id),
 		'bg'    => $icon_bg,
 		'color' => $icon_color,
 	);
