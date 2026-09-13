@@ -113,9 +113,9 @@ body {
   color: rgba(0, 0, 0, 0.8);
   font-weight: 300;
   /* letter-spacing: .9px; */
-  -webkit-hyphens: auto;
+  /* -webkit-hyphens: auto;
   -ms-hyphens: auto;
-  hyphens: auto;
+  hyphens: auto; */
   /* font-family: "Inter", sans-serif; */
   /* font-family: "Aptos", Arial, sans-serif; */
 }

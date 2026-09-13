@@ -203,7 +203,7 @@ for ($i = 1; $i <= 6; $i++) {
 
 		<div id="materials-carousel" class="materials-carousel mt-6 flex gap-6 overflow-x-auto scroll-smooth py-8">
 			<?php foreach ($slides as $slide) : ?>
-				<a href="<?php echo esc_url($slide['link']); ?>" class="materials-slide group overflow-hidden rounded-2xl border border-[#190E5D]/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#00a2e0]/35 hover:shadow-xl hover:shadow-[#190E5D]/10">
+				<a href="<?php echo esc_url($slide['link']); ?>" target="_blank" rel="noopener noreferrer" class="materials-slide group overflow-hidden rounded-2xl border border-[#190E5D]/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#00a2e0]/35 hover:shadow-xl hover:shadow-[#190E5D]/10">
 					<div class="relative h-44 overflow-hidden bg-[#190E5D]">
 						<img src="<?php echo esc_url($slide['image']); ?>" alt="<?php echo esc_attr($slide['title']); ?>" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
 						<div class="absolute inset-0 bg-gradient-to-t from-[#120A45]/70 via-[#120A45]/10 to-transparent"></div>

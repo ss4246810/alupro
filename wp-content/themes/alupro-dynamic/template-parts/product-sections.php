@@ -499,7 +499,7 @@ if (!empty($categories) && !is_wp_error($categories)) :
 					<?php foreach ($slides as $slide) :
 						$status_class = (trim($slide['status']) === 'In Stock') ? 'bg-[#047857] text-white' : 'bg-[#F4C026] text-[#190E5D]';
 					?>
-						<a href="<?php echo esc_url($slide['link']); ?>" class="<?php echo esc_attr($mapping['slide_class']); ?> product-slide group overflow-hidden rounded-2xl border border-[#190E5D]/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#00a2e0]/35 hover:shadow-xl hover:shadow-[#190E5D]/10">
+						<a href="<?php echo esc_url($slide['link']); ?>" target="_blank" rel="noopener noreferrer" class="<?php echo esc_attr($mapping['slide_class']); ?> product-slide group overflow-hidden rounded-2xl border border-[#190E5D]/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#00a2e0]/35 hover:shadow-xl hover:shadow-[#190E5D]/10">
 							<div class="relative h-44 overflow-hidden bg-[#190E5D]">
 								<?php if ($slide['image']) : ?>
 									<img src="<?php echo esc_url($slide['image']); ?>" alt="<?php echo esc_attr($slide['title']); ?>" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
