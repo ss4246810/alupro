@@ -45,7 +45,7 @@ while (have_posts()):
 									Tempers: <?php echo esc_html($p_tempers); ?>
 								</p>
 								<p class="mt-1 text-sm text-[#4B5563]">
-									<?php echo esc_html($p_certifications); ?>
+									<?php echo nl2br(esc_html($p_certifications)); ?>
 								</p>
 							</div>
 						</div>
