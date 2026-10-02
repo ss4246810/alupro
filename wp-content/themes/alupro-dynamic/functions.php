@@ -102,8 +102,36 @@ function alupro_dynamic_enqueue_assets()
 		filemtime(get_theme_file_path('js/all.js')),
 		true
 	);
+
+	if (is_page_template('page-contact.php') || is_page('contact')) {
+		wp_enqueue_script(
+			'cloudflare-turnstile',
+			'https://challenges.cloudflare.com/turnstile/v0/api.js',
+			array(),
+			null,
+			array('strategy' => 'defer', 'in_footer' => true)
+		);
+	}
 }
 add_action('wp_enqueue_scripts', 'alupro_dynamic_enqueue_assets');
+
+/**
+ * Ensure Cloudflare Turnstile script loads with async and defer.
+ */
+function alupro_dynamic_turnstile_script_attributes($tag, $handle)
+{
+	if ('cloudflare-turnstile' === $handle) {
+		if (false === strpos($tag, 'async')) {
+			$tag = str_replace('<script ', '<script async ', $tag);
+		}
+		if (false === strpos($tag, 'defer')) {
+			$tag = str_replace('<script ', '<script defer ', $tag);
+		}
+	}
+
+	return $tag;
+}
+add_filter('script_loader_tag', 'alupro_dynamic_turnstile_script_attributes', 10, 2);
 
 /**
  * Register Customizer Settings and Controls.
@@ -872,6 +900,127 @@ add_action('admin_post_nopriv_alupro_quote_enquiry', 'alupro_dynamic_handle_quot
 add_action('admin_post_alupro_quote_enquiry', 'alupro_dynamic_handle_quote_enquiry');
 
 /**
+ * Get the Contact page ID dynamically.
+ */
+function alupro_get_contact_page_id()
+{
+	if (is_page_template('page-contact.php')) {
+		return get_the_ID();
+	}
+
+	$pages = get_posts(array(
+		'post_type'      => 'page',
+		'meta_key'       => '_wp_page_template',
+		'meta_value'     => 'page-contact.php',
+		'posts_per_page' => 1,
+	));
+
+	if (!empty($pages)) {
+		return $pages[0]->ID;
+	}
+
+	$page = get_page_by_path('contact');
+	if ($page) {
+		return $page->ID;
+	}
+
+	return null;
+}
+
+/**
+ * Get Cloudflare Turnstile Site Key for forms.
+ */
+function alupro_dynamic_get_turnstile_site_key($post_id = null)
+{
+	if (defined('ALUPRO_TURNSTILE_SITE_KEY') && ALUPRO_TURNSTILE_SITE_KEY) {
+		return ALUPRO_TURNSTILE_SITE_KEY;
+	}
+
+	if (function_exists('get_field')) {
+		$target_id = $post_id ? $post_id : alupro_get_contact_page_id();
+		$site_key = get_field('contact_turnstile_site_key', $target_id);
+		if (!empty($site_key)) {
+			return trim($site_key);
+		}
+	}
+
+	return '0x4AAAAAAFL4kCYfNp2mpKcC';
+}
+
+/**
+ * Get Cloudflare Turnstile Secret Key for forms.
+ */
+function alupro_dynamic_get_turnstile_secret_key($post_id = null)
+{
+	if (defined('ALUPRO_TURNSTILE_SECRET_KEY') && ALUPRO_TURNSTILE_SECRET_KEY) {
+		return ALUPRO_TURNSTILE_SECRET_KEY;
+	}
+
+	if (function_exists('get_field')) {
+		$target_id = $post_id ? $post_id : alupro_get_contact_page_id();
+		$secret_key = get_field('contact_turnstile_secret_key', $target_id);
+		if (!empty($secret_key)) {
+			return trim($secret_key);
+		}
+	}
+
+	return '0x4AAAAAAFL4kMoudH_-flmYnsj32J3j6Hc';
+}
+
+/**
+ * Verify Cloudflare Turnstile token.
+ *
+ * @param string $token
+ * @param int|null $post_id
+ * @return bool
+ */
+function alupro_dynamic_verify_turnstile($token, $post_id = null)
+{
+	$secret = alupro_dynamic_get_turnstile_secret_key($post_id);
+	if (empty($secret)) {
+		return true;
+	}
+
+	if (empty($token)) {
+		return false;
+	}
+
+	$remote_ip = '';
+	if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+		$remote_ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_CF_CONNECTING_IP']));
+	} elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+		$remote_ip = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']));
+	}
+
+	$body_args = array(
+		'secret'   => $secret,
+		'response' => $token,
+	);
+	if (!empty($remote_ip)) {
+		$body_args['remoteip'] = $remote_ip;
+	}
+
+	$response = wp_remote_post('https://challenges.cloudflare.com/turnstile/v0/siteverify', array(
+		'timeout' => 15,
+		'body'    => $body_args,
+	));
+
+	if (is_wp_error($response)) {
+		return false;
+	}
+
+	$status_code = wp_remote_retrieve_response_code($response);
+	if (200 !== (int) $status_code) {
+		return false;
+	}
+
+	$body = wp_remote_retrieve_body($response);
+	$data = json_decode($body, true);
+
+	return !empty($data['success']);
+}
+
+/**
  * Handle Contact page submissions through wp_mail().
  */
 function alupro_dynamic_handle_contact_enquiry()
@@ -885,6 +1034,15 @@ function alupro_dynamic_handle_contact_enquiry()
 	if ('' !== $honeypot) {
 		wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_contact', 'success'));
 		exit;
+	}
+
+	$turnstile_site_key = alupro_dynamic_get_turnstile_site_key();
+	if (!empty($turnstile_site_key)) {
+		$turnstile_response = isset($_POST['cf-turnstile-response']) ? sanitize_text_field(wp_unslash($_POST['cf-turnstile-response'])) : '';
+		if (empty($turnstile_response) || !alupro_dynamic_verify_turnstile($turnstile_response)) {
+			wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_contact', 'captcha_failed'));
+			exit;
+		}
 	}
 
 	$name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';

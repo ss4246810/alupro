@@ -159,6 +159,10 @@ $warehouse_address_body = alupro_contact_address_body($warehouse_address);
 					<p class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700">
 						<?php esc_html_e('Please provide your name, valid email address, and message.', 'alupro-dynamic'); ?>
 					</p>
+				<?php elseif ('captcha_failed' === $contact_status) : ?>
+					<p class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700">
+						<?php esc_html_e('Security verification failed. Please complete the captcha check and try again.', 'alupro-dynamic'); ?>
+					</p>
 				<?php elseif ('error' === $contact_status) : ?>
 					<p class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700">
 						<?php esc_html_e('The message could not be sent. Please try again.', 'alupro-dynamic'); ?>
@@ -217,6 +221,24 @@ $warehouse_address_body = alupro_contact_address_body($warehouse_address);
 					</div>
 
 					<input type="text" name="website" value="" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+					<?php
+					$turnstile_site_key = function_exists('alupro_dynamic_get_turnstile_site_key') ? alupro_dynamic_get_turnstile_site_key($contact_page_id) : '0x4AAAAAAFL4kCYfNp2mpKcC';
+					if (!empty($turnstile_site_key)) :
+						if (!wp_script_is('cloudflare-turnstile', 'enqueued')) {
+							wp_enqueue_script(
+								'cloudflare-turnstile',
+								'https://challenges.cloudflare.com/turnstile/v0/api.js',
+								array(),
+								null,
+								array('strategy' => 'defer', 'in_footer' => true)
+							);
+						}
+					?>
+						<div class="pt-2">
+							<div class="cf-turnstile" data-sitekey="<?php echo esc_attr($turnstile_site_key); ?>" data-theme="light"></div>
+						</div>
+					<?php endif; ?>
 
 					<div class="flex flex-col gap-4 pt-2 md:flex-row md:items-center md:justify-between">
 						<button type="submit" class="group inline-flex items-center justify-center gap-3 rounded-2xl bg-[#00a2e0] hover:bg-[#0091c9] px-8 py-4 font-bold text-white shadow-sm shadow-[#190E5D]/20 transition hover:-translate-y-1 cursor-pointer">

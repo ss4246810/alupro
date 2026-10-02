@@ -65,6 +65,24 @@ acf_add_local_field_group(array(
 			'type' => 'text',
 			'default_value' => 'We reply within 2 hours during business hours.',
 		),
+		array(
+			'key' => 'field_contact_turnstile_site_key',
+			'label' => __('Turnstile / Captcha Site Key', 'alupro-dynamic'),
+			'name' => 'contact_turnstile_site_key',
+			'type' => 'text',
+			'default_value' => '0x4AAAAAAFL4kCYfNp2mpKcC',
+			'instructions' => __('Cloudflare Turnstile Site Key for the contact form.', 'alupro-dynamic'),
+			'wrapper' => array('width' => '50%'),
+		),
+		array(
+			'key' => 'field_contact_turnstile_secret_key',
+			'label' => __('Turnstile / Captcha Secret Key', 'alupro-dynamic'),
+			'name' => 'contact_turnstile_secret_key',
+			'type' => 'text',
+			'default_value' => '0x4AAAAAAFL4kMoudH_-flmYnsj32J3j6Hc',
+			'instructions' => __('Cloudflare Turnstile Secret Key for verifying form submissions.', 'alupro-dynamic'),
+			'wrapper' => array('width' => '50%'),
+		),
 	),
 	'location' => array(
 		array(
