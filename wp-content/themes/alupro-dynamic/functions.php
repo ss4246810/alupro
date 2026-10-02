@@ -103,7 +103,8 @@ function alupro_dynamic_enqueue_assets()
 		true
 	);
 
-	if (is_page_template('page-contact.php') || is_page('contact')) {
+	$turnstile_site_key = alupro_dynamic_get_turnstile_site_key();
+	if (!empty($turnstile_site_key)) {
 		wp_enqueue_script(
 			'cloudflare-turnstile',
 			'https://challenges.cloudflare.com/turnstile/v0/api.js',
@@ -886,6 +887,15 @@ function alupro_dynamic_handle_newsletter_subscribe()
 		exit;
 	}
 
+	$turnstile_site_key = alupro_dynamic_get_turnstile_site_key();
+	if (!empty($turnstile_site_key)) {
+		$turnstile_response = isset($_POST['cf-turnstile-response']) ? sanitize_text_field(wp_unslash($_POST['cf-turnstile-response'])) : '';
+		if (empty($turnstile_response) || !alupro_dynamic_verify_turnstile($turnstile_response)) {
+			wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_subscribe', 'captcha_failed'));
+			exit;
+		}
+	}
+
 	$email = isset($_POST['subscriber_email']) ? sanitize_email(wp_unslash($_POST['subscriber_email'])) : '';
 	if (!$email || !is_email($email)) {
 		wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_subscribe', 'invalid'));
@@ -940,6 +950,15 @@ function alupro_dynamic_handle_quote_enquiry()
 	if ('' !== $honeypot) {
 		wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_enquiry', 'success'));
 		exit;
+	}
+
+	$turnstile_site_key = alupro_dynamic_get_turnstile_site_key();
+	if (!empty($turnstile_site_key)) {
+		$turnstile_response = isset($_POST['cf-turnstile-response']) ? sanitize_text_field(wp_unslash($_POST['cf-turnstile-response'])) : '';
+		if (empty($turnstile_response) || !alupro_dynamic_verify_turnstile($turnstile_response)) {
+			wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_enquiry', 'captcha_failed'));
+			exit;
+		}
 	}
 
 	$name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';

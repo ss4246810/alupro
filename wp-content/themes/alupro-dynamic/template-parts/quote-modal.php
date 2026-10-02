@@ -48,6 +48,10 @@ $redirect_to = remove_query_arg(array('alupro_subscribe', 'alupro_enquiry', 'alu
 			<p class="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700">
 				<?php esc_html_e('Please provide your name, valid email address, and project details.', 'alupro-dynamic'); ?>
 			</p>
+		<?php elseif ('captcha_failed' === $enquiry_status) : ?>
+			<p class="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700">
+				<?php esc_html_e('Security verification failed. Please complete the captcha check and try again.', 'alupro-dynamic'); ?>
+			</p>
 		<?php elseif ('error' === $enquiry_status) : ?>
 			<p class="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700">
 				<?php esc_html_e('The enquiry could not be sent. Please try again.', 'alupro-dynamic'); ?>
@@ -106,6 +110,24 @@ $redirect_to = remove_query_arg(array('alupro_subscribe', 'alupro_enquiry', 'alu
 				class="min-h-44 rounded-2xl border border-[#BFD0E4] bg-white px-7 py-6 text-sm text-[#111827] outline-none transition-all placeholder:text-[#8D98B3] focus:border-[#23AEEA] focus:ring-4 focus:ring-[#23AEEA]/15"
 			></textarea>
 			<input type="text" name="website" value="" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+			<?php
+			$turnstile_site_key = function_exists('alupro_dynamic_get_turnstile_site_key') ? alupro_dynamic_get_turnstile_site_key() : '0x4AAAAAAFL4kCYfNp2mpKcC';
+			if (!empty($turnstile_site_key)) :
+				if (!wp_script_is('cloudflare-turnstile', 'enqueued')) {
+					wp_enqueue_script(
+						'cloudflare-turnstile',
+						'https://challenges.cloudflare.com/turnstile/v0/api.js',
+						array(),
+						null,
+						array('strategy' => 'defer', 'in_footer' => true)
+					);
+				}
+			?>
+				<div class="my-1">
+					<div class="cf-turnstile" data-sitekey="<?php echo esc_attr($turnstile_site_key); ?>" data-theme="light"></div>
+				</div>
+			<?php endif; ?>
 
 			<button
 				type="submit"
