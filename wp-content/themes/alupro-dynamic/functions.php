@@ -679,9 +679,48 @@ function alupro_dynamic_form_redirect_url($status_key, $status_value)
  */
 function alupro_dynamic_form_recipient_email()
 {
+	if (defined('ALUPRO_NOTIFICATION_EMAIL') && ALUPRO_NOTIFICATION_EMAIL) {
+		return sanitize_email(ALUPRO_NOTIFICATION_EMAIL);
+	}
+
 	$email = sanitize_email(get_option('admin_email'));
 
-	return $email ? $email : sanitize_email('info@aluproalloy.com');
+	if ($email && is_email($email) && !str_ends_with($email, '@example.com')) {
+		return $email;
+	}
+
+	return sanitize_email('info@aluproalloy.com');
+}
+
+/**
+ * Resolve the authorized sender email address for outgoing site emails.
+ */
+function alupro_dynamic_form_sender_email()
+{
+	$mail_smtp_options = get_option('wp_mail_smtp');
+	if (is_array($mail_smtp_options) && !empty($mail_smtp_options['mail']['from_email'])) {
+		return sanitize_email($mail_smtp_options['mail']['from_email']);
+	}
+
+	if (defined('ALUPRO_FROM_EMAIL') && ALUPRO_FROM_EMAIL) {
+		return sanitize_email(ALUPRO_FROM_EMAIL);
+	}
+
+	return 'info@aluproalloy.com';
+}
+
+/**
+ * Resolve the authorized sender name for outgoing site emails.
+ */
+function alupro_dynamic_form_sender_name()
+{
+	$mail_smtp_options = get_option('wp_mail_smtp');
+	if (is_array($mail_smtp_options) && !empty($mail_smtp_options['mail']['from_name'])) {
+		return sanitize_text_field($mail_smtp_options['mail']['from_name']);
+	}
+
+	$site_name = get_bloginfo('name');
+	return $site_name ? $site_name : 'AluPro Alloy Solutions';
 }
 
 /**
@@ -689,7 +728,14 @@ function alupro_dynamic_form_recipient_email()
  */
 function alupro_dynamic_form_mail_headers($reply_to_email = '', $reply_to_name = '')
 {
-	$headers = array('Content-Type: text/html; charset=UTF-8');
+	$from_email = alupro_dynamic_form_sender_email();
+	$from_name  = alupro_dynamic_form_sender_name();
+
+	$headers = array(
+		'Content-Type: text/html; charset=UTF-8',
+		'From: ' . ($from_name ? $from_name . ' <' . $from_email . '>' : $from_email),
+	);
+
 	$reply_to_email = sanitize_email($reply_to_email);
 
 	if ($reply_to_email && is_email($reply_to_email)) {
@@ -699,6 +745,50 @@ function alupro_dynamic_form_mail_headers($reply_to_email = '', $reply_to_name =
 
 	return $headers;
 }
+
+/**
+ * Ensure default WordPress mail sender matches authenticated SMTP account.
+ */
+add_filter('wp_mail_from', function ($original_email) {
+	if (empty($original_email) || str_starts_with($original_email, 'wordpress@')) {
+		return alupro_dynamic_form_sender_email();
+	}
+	return $original_email;
+});
+
+add_filter('wp_mail_from_name', function ($original_name) {
+	if (empty($original_name) || 'WordPress' === $original_name) {
+		return alupro_dynamic_form_sender_name();
+	}
+	return $original_name;
+});
+
+/**
+ * Capture and log any wp_mail() failures for debugging.
+ */
+add_action('wp_mail_failed', function ($wp_error) {
+	if (is_wp_error($wp_error)) {
+		error_log('[AluPro WP Mail Error] ' . $wp_error->get_error_message());
+		update_option('alupro_last_mail_error', array(
+			'time'    => current_time('mysql'),
+			'message' => $wp_error->get_error_message(),
+			'data'    => $wp_error->get_error_data(),
+		));
+	}
+});
+
+/**
+ * Display last email error notice in WordPress Admin.
+ */
+add_action('admin_notices', function () {
+	if (!current_user_can('manage_options')) {
+		return;
+	}
+	$last_error = get_option('alupro_last_mail_error');
+	if (!empty($last_error) && !empty($last_error['message'])) {
+		echo '<div class="notice notice-error is-dismissible"><p><strong>[AluPro Email Notice]</strong> Last email sending failed (' . esc_html($last_error['time']) . '): ' . esc_html($last_error['message']) . '</p></div>';
+	}
+});
 
 /**
  * Branded HTML email template for frontend forms.
@@ -785,6 +875,7 @@ function alupro_dynamic_form_email_template($heading, $intro, $rows = array(), $
 function alupro_dynamic_handle_newsletter_subscribe()
 {
 	if (empty($_POST['alupro_newsletter_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['alupro_newsletter_nonce'])), 'alupro_newsletter_subscribe')) {
+		error_log('[AluPro Form] Newsletter nonce verification failed.');
 		wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_subscribe', 'error'));
 		exit;
 	}
@@ -824,9 +915,11 @@ function alupro_dynamic_handle_newsletter_subscribe()
 	);
 
 	$admin_sent = wp_mail($admin_email, $admin_subject, $admin_message, alupro_dynamic_form_mail_headers($email));
-	$client_sent = wp_mail($email, $client_subject, $client_message, alupro_dynamic_form_mail_headers($admin_email, get_bloginfo('name')));
+	if ($email && is_email($email)) {
+		wp_mail($email, $client_subject, $client_message, alupro_dynamic_form_mail_headers($admin_email, get_bloginfo('name')));
+	}
 
-	wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_subscribe', ($admin_sent && $client_sent) ? 'success' : 'error'));
+	wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_subscribe', $admin_sent ? 'success' : 'error'));
 	exit;
 }
 add_action('admin_post_nopriv_alupro_newsletter_subscribe', 'alupro_dynamic_handle_newsletter_subscribe');
@@ -838,6 +931,7 @@ add_action('admin_post_alupro_newsletter_subscribe', 'alupro_dynamic_handle_news
 function alupro_dynamic_handle_quote_enquiry()
 {
 	if (empty($_POST['alupro_quote_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['alupro_quote_nonce'])), 'alupro_quote_enquiry')) {
+		error_log('[AluPro Form] Quote enquiry nonce verification failed.');
 		wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_enquiry', 'error'));
 		exit;
 	}
@@ -891,9 +985,11 @@ function alupro_dynamic_handle_quote_enquiry()
 	);
 
 	$admin_sent = wp_mail($admin_email, $admin_subject, $admin_message, alupro_dynamic_form_mail_headers($email, $name));
-	$client_sent = wp_mail($email, $client_subject, $client_message, alupro_dynamic_form_mail_headers($admin_email, get_bloginfo('name')));
+	if ($email && is_email($email)) {
+		wp_mail($email, $client_subject, $client_message, alupro_dynamic_form_mail_headers($admin_email, get_bloginfo('name')));
+	}
 
-	wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_enquiry', ($admin_sent && $client_sent) ? 'success' : 'error'));
+	wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_enquiry', $admin_sent ? 'success' : 'error'));
 	exit;
 }
 add_action('admin_post_nopriv_alupro_quote_enquiry', 'alupro_dynamic_handle_quote_enquiry');
@@ -1095,9 +1191,11 @@ function alupro_dynamic_handle_contact_enquiry()
 	);
 
 	$admin_sent = wp_mail($admin_email, $admin_subject, $admin_message, alupro_dynamic_form_mail_headers($email, $name));
-	$client_sent = wp_mail($email, $client_subject, $client_message, alupro_dynamic_form_mail_headers($admin_email, get_bloginfo('name')));
+	if ($email && is_email($email)) {
+		wp_mail($email, $client_subject, $client_message, alupro_dynamic_form_mail_headers($admin_email, get_bloginfo('name')));
+	}
 
-	wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_contact', ($admin_sent && $client_sent) ? 'success' : 'error'));
+	wp_safe_redirect(alupro_dynamic_form_redirect_url('alupro_contact', $admin_sent ? 'success' : 'error'));
 	exit;
 }
 add_action('admin_post_nopriv_alupro_contact_enquiry', 'alupro_dynamic_handle_contact_enquiry');
